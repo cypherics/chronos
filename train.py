@@ -1,4 +1,4 @@
-from ml.model_pt import ModelPt
+from ml.pt_model import ModelPt
 from ml.pt_loader import LoaderPt
 from ml.pt_trainer import TrainerPt
 from utils import yaml_utility, print_format

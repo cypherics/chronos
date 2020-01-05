@@ -5,7 +5,6 @@ import torch
 from torch.optim import SGD, Adam, RMSprop
 from torch.utils.data import DataLoader
 
-from ml.base import BaseDataLoader, BaseValidation
 from utils import print_format
 import ml.ml_type as ml_type
 from ml import scheduler as lr_helper
