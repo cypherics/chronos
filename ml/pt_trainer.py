@@ -13,14 +13,17 @@ from utils.directory_utils import path_creation
 from utils.visdom_data_visualization import DataViz
 
 
-class Trainer:
-    def __init__(self, parameter_loader, training_configuration, logger, training_path):
+class TrainerPt:
+    def __init__(
+        self, loader_pt, model_pt, training_configuration, logger, training_path
+    ):
         self.training_configuration = training_configuration
         self.logger = logger
         self.training_path = training_path
 
-        self.parameter_loader = parameter_loader
-        self.status, self.version = self.parameter_loader.get_model_version_and_status(
+        self.loader_pt = loader_pt
+        self.model_pt = model_pt
+        self.status, self.version = self.model_pt.get_model_version_and_status(
             self.training_path
         )
         self.default_weights_path, self.best_weights_path = path_creation.create_weights_path(
@@ -60,12 +63,12 @@ class Trainer:
             model.train()
             random.seed()
 
-            tq = tqdm.tqdm(total=(len(self.parameter_loader.train_loader) * batch_size))
+            tq = tqdm.tqdm(total=(len(self.loader_pt.train_loader) * batch_size))
             lr = optimizer.param_groups[0]["lr"]
             tq.set_description("Epoch {}, lr {}".format(ongoing_epoch + 1, lr))
             losses = []
 
-            tl = self.parameter_loader.train_loader
+            tl = self.loader_pt.train_loader
 
             try:
                 mean_loss = 0
@@ -92,11 +95,11 @@ class Trainer:
                     tq.set_postfix(loss="{:.5f}".format(mean_loss))
 
                     if i and i % 20 == 0:
-                        predicted_images = self.parameter_loader.validation.inference(
+                        predicted_images = self.loader_pt.validation.inference(
                             model,
                             i,
                             ongoing_epoch,
-                            self.parameter_loader.test_loader,
+                            self.loader_pt.test_loader,
                             save_path=os.path.join(self.training_path, self.version),
                         )
                         data_viz.plot_test_image(predicted_images)
@@ -107,10 +110,10 @@ class Trainer:
 
                 tq.close()
 
-                valid_metrics = self.parameter_loader.validation.perform_validation(
+                valid_metrics = self.loader_pt.validation.perform_validation(
                     model=model,
                     loss_function=loss,
-                    valid_loader=self.parameter_loader.val_loader,
+                    valid_loader=self.loader_pt.val_loader,
                 )
                 valid_loss = valid_metrics["valid_loss"]
                 valid_losses.append(valid_loss)
@@ -125,7 +128,7 @@ class Trainer:
                 if (previous_min_loss is None) or (valid_loss < previous_min_loss):
                     previous_min_loss = valid_loss
 
-                    self.parameter_loader.save_check_point(
+                    self.model_pt.save_check_point(
                         model=model,
                         optimizer=optimizer,
                         step=step,
@@ -138,7 +141,7 @@ class Trainer:
                             ongoing_epoch, mean_loss, valid_metrics
                         )
                     )
-                self.parameter_loader.save_check_point(
+                self.model_pt.save_check_point(
                     model=model,
                     optimizer=optimizer,
                     step=step,
@@ -159,7 +162,7 @@ class Trainer:
 
                 end_time = time.time()
                 total_time = date_time_utility.get_time(end_time - start_time)
-                self.parameter_loader.save_check_point(
+                self.model_pt.save_check_point(
                     model=model,
                     optimizer=optimizer,
                     step=step,
@@ -204,10 +207,10 @@ class Trainer:
         self.logger.log_info("Total Training Time : {}".format(str(total_time)))
 
     def initialize_required_training_param(self):
-        optimizer = self.parameter_loader.load_optimizer(self.parameter_loader.model)
-        loss = self.parameter_loader.load_loss()
-        lr_scheduler = self.parameter_loader.load_lr_scheduler(optimizer)
-        model, optimizer, learning_rate, starting_epoch, step = self.parameter_loader.load_model_weights_and_params(
+        optimizer = self.loader_pt.load_optimizer(self.model_pt.model)
+        loss = self.loader_pt.load_loss()
+        lr_scheduler = self.loader_pt.load_lr_scheduler(optimizer)
+        model, optimizer, learning_rate, starting_epoch, step = self.model_pt.load_model_weights_and_params(
             optimizer, status=self.status, weight_path=self.default_weights_path
         )
         return model, optimizer, loss, lr_scheduler, learning_rate, starting_epoch, step

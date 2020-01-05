@@ -1,5 +1,6 @@
-from ml.loader import ParameterLoader
-from ml.trainer import Trainer
+from ml.model_pt import ModelPt
+from ml.pt_loader import LoaderPt
+from ml.pt_trainer import TrainerPt
 from utils import yaml_utility, print_format
 from utils.directory_utils import path_creation
 from utils.logger import Logger
@@ -24,12 +25,14 @@ def main():
 
     print_format.colored_single_string_print_with_brackets("Loading", "red")
     print_format.print_tab_fancy("Inference / DataLoader ", "yellow")
-    param_loader = ParameterLoader(training_configurations, log)
+    loader_pt = LoaderPt(training_configurations, log)
     print_format.print_tab_fancy("Model", "yellow")
-
-    trainer = Trainer(param_loader, training_configurations, log, training_path)
-    trainer.create_current_run_config_helper()
-    trainer.training()
+    model_pt = ModelPt(training_configurations, log)
+    trainer_pt = TrainerPt(
+        loader_pt, model_pt, training_configurations, log, training_path
+    )
+    trainer_pt.create_current_run_config_helper()
+    trainer_pt.training()
 
 
 main()

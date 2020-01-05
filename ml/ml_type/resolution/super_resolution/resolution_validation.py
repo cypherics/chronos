@@ -5,9 +5,6 @@ from ml.base import BaseValidation
 
 
 class ResolutionValidation(BaseValidation):
-    def __init__(self, problem_type):
-        super().__init__(problem_type)
-
     def compute_metric(self, **kwargs):
         pass
 

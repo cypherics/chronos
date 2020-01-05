@@ -6,7 +6,7 @@ from pathlib import Path
 from torch.utils.data import Dataset
 
 from utils.print_format import print_exception
-from data_processing import data_normalization, data_transformation
+from data_processing import pre_processing, augmentation
 
 from abc import ABCMeta
 
@@ -64,7 +64,7 @@ class BaseDataLoader(Dataset, metaclass=ABCMeta):
             if number_of_transformation == 1:
                 transformation = transformation_to_applied[0]
             else:
-                transformation = getattr(data_transformation, transform_type)(
+                transformation = getattr(augmentation, transform_type)(
                     transformation_to_applied, prob=0.5
                 )
             return transformation
@@ -80,12 +80,10 @@ class BaseDataLoader(Dataset, metaclass=ABCMeta):
     @staticmethod
     def _get_train_transformation(to_perform, transform_type, augment_prob):
         transformation = []
-        transforms_type = getattr(data_transformation, transform_type)
+        transforms_type = getattr(augmentation, transform_type)
 
         for trans in to_perform:
-            transformation.append(
-                getattr(data_transformation, trans)(prob=augment_prob)
-            )
+            transformation.append(getattr(augmentation, trans)(prob=augment_prob))
 
         train_transformation = transforms_type(transformation)
         return train_transformation
@@ -93,7 +91,7 @@ class BaseDataLoader(Dataset, metaclass=ABCMeta):
     @staticmethod
     def load_normalization(normalization_name):
         try:
-            normalization = getattr(data_normalization, normalization_name)()
+            normalization = getattr(pre_processing, normalization_name)()
             return normalization
 
         except Exception as ex:

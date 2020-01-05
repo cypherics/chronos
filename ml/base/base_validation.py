@@ -19,10 +19,6 @@ from abc import ABCMeta, abstractmethod
 
 
 class BaseValidation(metaclass=ABCMeta):
-    def __init__(self, problem_type):
-        super().__init__()
-        self.current_problem_type = problem_type
-
     @abstractmethod
     def compute_metric(self, **kwargs):
         raise NotImplementedError

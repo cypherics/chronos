@@ -8,8 +8,7 @@ from utils.torch_tensor_conversion import cuda_variable
 
 
 class BinaryValidation(BaseValidation):
-    def __init__(self, problem_type):
-        super().__init__(problem_type)
+    def __init__(self):
         self.jaccard = []
         self.precision_metric = []
         self.recall_metric = []
