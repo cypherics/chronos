@@ -1,0 +1,28 @@
+inference:
+  SimpleInference:
+  Flip:
+  MirrorCrop:
+    dimension_mirror:
+      - 288
+      - 288
+  RescaleCrop:
+    dimension_rescale:
+      - 288
+      - 288
+  LargeContextInference:
+    dimension_large_context:
+      - 512
+      - 512
+  Rotate:
+  ClaheInference:
+
+
+model_dimension:
+  - 384
+  - 384
+
+path_to_images: /home/palnak/Temp/super_reolution
+
+network_weights: /home/palnak/PycharmProjects/Bob_The_Builder/checkpoints/ReFINENET_ResNet34_INRIA_DUAL_DIM/ReFineNet/training/v1/default_checkpoint.pt
+config_path: /home/palnak/PycharmProjects/Bob_The_Builder/checkpoints/ReFINENET_ResNet34_INRIA_DUAL_DIM/ReFineNet/training/v1/configuration.yaml
+inference_to: BinaryInference

@@ -1,0 +1,46 @@
+root : /home/palnak/Dataset/scratch_inria
+
+experiment_name : testbob1
+
+# DLinkNet34
+# ReFineNet
+# ICTNet
+# HighResolutionModel
+# MFRN
+# GCNModel
+model : DLinkNet34
+
+# JaccardBinaryLoss
+# DiceBinaryLoss
+# BuildingBoundarySigmoidLoss
+# WeightedBinaryLovaszLoss
+# SingleClassSoftmaxLoss
+# BinaryDistanceBoundaryLoss
+# ResolutionPerceptualLoss
+loss : JaccardBinaryLoss
+
+# SGD
+# Adam
+# RMSprop
+optimizer : RMSprop
+
+# MinMaxImageNet
+# MinMax
+# MinMaxScaleImageNet
+# DivideBy255
+normalization : DivideBy255
+
+# Binary
+# BuildingAndContour
+# SingleClassSoftmax
+# BinaryDistanceBoundary
+# SuperResolution
+problem_type : Binary
+
+# SGDRWithRestart
+# PolyLrDecay
+# ExponentialLr
+# ReduceOnPlateau
+scheduler : PolyLrDecay
+
+transfer_weights_path :

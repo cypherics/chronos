@@ -1,0 +1,212 @@
+initial_assignment:
+  model_input_dimension: [512, 512]
+  n_epochs: 20
+  batch_size: 2
+
+model :
+  DLinkNet34:
+    num_classes: 2
+    pre_trained_image_net: True
+    res_net_to_use: resnet34
+
+
+  ResNetDUC101:
+    num_classes: 1
+    pre_trained_image_net: True
+    res_net_to_use: resnet101
+    dilation_bigger: False
+
+
+  DeepLabV3:
+    num_classes: 1
+    pre_trained_image_net: True
+    res_net_to_use: resnet101
+    output_stride: 16
+    mode_upsampling: bilinear
+
+  DeepLab3Plus:
+    num_classes: 1
+    pre_trained_image_net: True
+    output_stride: 8
+    batch_momentum: 0.02
+
+  ReFineNet:
+    backbone_to_use: resnet34
+    pre_trained_image_net: True
+    top_layers_trainable: True
+    num_classes: 1
+    fusion_module: False
+    se_rcu: False
+    gcn_reduction: True
+    final_mode: sub_pixel
+
+  AlBuNet:
+    num_classes: 1
+    pre_trained: True
+    is_deconvolution: True
+
+  ICTNet:
+    classes: 1
+    layers_per_block: [4, 5, 7, 10, 12, 15, 12, 10, 7, 5, 4]
+    growth_rate: 16
+
+  MFRN:
+    classes: 1
+    drop_rate: 0.2
+    batch_momentum: 0.1
+    growth_rate: 12
+    layers_per_block: 4
+
+  GCNModel:
+    backbone_to_use: resnet34
+    pre_trained_image_net: True
+    top_layers_trainable: True
+    num_classes: 1
+    deconvolution_method: bilinear
+
+  HighResolutionModel:
+    scale: 4
+
+loss:
+  JaccardBinaryLoss:
+    jaccard_weight: 1
+
+  DiceBinaryLoss:
+    dice_weight: 1
+
+  BuildingBoundarySigmoidLoss:
+    jaccard_weight_building: 1
+    jaccard_weight_boundary: 1
+
+  WeightedBinaryLovaszLoss:
+    binary_weight: 1
+    lovasz_weight: 1
+
+  SingleClassSoftmaxLoss:
+    weight: None
+
+  SingleClassSoftmaxJaccardLoss:
+    jaccard_weight: 1
+
+  BinaryDistanceBoundaryLoss:
+    building_weight: 1
+    boundary_weight: 1
+    distance_weight: 1
+
+  ResolutionPerceptualLoss:
+    weight:
+      - 0.2
+      - 0.7
+      - 0.1
+
+scheduler :
+  SGDRWithRestart:
+    max_num_iter: 10
+    multiplying_factor: 4
+    out_dir: None
+    take_snapshot: False
+    min_lr_rate: 0.000001
+
+
+  PolyLrDecay:
+    decay_after_epoch: 1
+    power: 0.9
+    max_epochs: 20
+
+  ExponentialLr:
+    decay_after_epoch: 2
+    gamma: 0.85
+
+  ReduceOnPlateau:
+    patience: 4
+    factor: 0.7
+
+
+early_stopping:
+  min_delta: 0
+  patience: 4
+
+
+
+optimizer:
+  SGD:
+    momentum: 0
+    dampening: 0
+    weight_decay: 0
+    nesterov: False
+    lr: 0.0001
+
+  Adam:
+    weight_decay: 0.00005
+    lr: 0.0001
+
+  RMSprop:
+    lr: 0.001
+    alpha: 0.995
+    weight_decay: 0
+    momentum: 0
+
+#- to_perform
+#
+#    --  this param is used to specify which augmentation techniques to use
+#
+#    --  Available techniques
+#
+#        --  ShiftScaleRotate
+#        --  Transpose
+#        --  Distort1
+#        --  HorizontalFlip
+#        --  VerticalFlip
+#        --  RandomFilter
+#        --  RandomHueSaturationValue
+#        --  RandomSaturation
+#        --  RandomContrast
+#        --  RandomBrightness
+#        --  Distort2
+#        --  Rotate
+#        --  RandomFlip
+#        --  GaussianNoise
+#        --  PerspectiveTransform
+#        --  MirrorCrop
+#        --  RescaleCrop
+
+#
+#- type
+#
+#    --  On selected transformation which type to apply
+#
+#        a - DualCompose
+#            --  applies all the given transformation in 'transform_to_use' on an image
+#
+#        b - OneOf
+#            -- will randomly apply one transformation from 'transform_to_use' on an image
+
+transformation :
+  DualCompose:
+    transform_1:
+      to_perform:
+        - HorizontalFlip
+        - VerticalFlip
+        - RandomFilter
+      transform_type: OneOf
+      augment_prob: 0.5
+
+#transformation :
+#  DualCompose:
+#    transform_1:
+#      to_perform:
+#        - HorizontalFlip
+#        - VerticalFlip
+#      transform_type: OneOf
+#      augment_prob: 0.5
+#
+#    transform_2:
+#      to_perform:
+#        - RandomFilter
+#      transform_type: OneOf
+#      augment_prob: 0.5
+
+# DEFAULT
+# RESUME
+
+training_state: DEFAULT
