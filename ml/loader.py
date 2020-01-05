@@ -3,6 +3,7 @@ import traceback
 
 import torch
 from torch.optim import SGD, Adam, RMSprop
+from torch.utils.data import DataLoader
 
 from utils import print_format
 import ml.ml_type as ml_type
@@ -10,11 +11,91 @@ from utils.directory_utils import directory_handler
 from ml import scheduler as lr_helper
 
 
-class ModelLoader:
+class ParameterLoader:
     def __init__(self, training_configuration, logger):
         self.training_configuration = training_configuration
         self.logger = logger
         self.model = self.load_model()
+
+        self.train_data_set, self.val_data_set, self.test_data_set = (
+            self.load_data_set()
+        )
+        self.train_loader, self.val_loader, self.test_loader = self.load_loader()
+        self.validation = self.load_validation()
+
+    def load_validation(self):
+        try:
+            problem_type = self.training_configuration["problem_type"]
+            current_problem_type_loader = getattr(
+                getattr(ml_type, problem_type), "Validation"
+            )(problem_type)
+            self.logger.log_info(
+                "Validation - {} Problem Type loaded".format(problem_type)
+            )
+
+            return current_problem_type_loader
+        except Exception as ex:
+            self.logger.log_exception(ex)
+            sys.exit(str(traceback.format_exc()))
+
+    def load_data_set(self):
+        try:
+            root = self.training_configuration["root"]
+            model_input_dimension = self.training_configuration["initial_assignment"][
+                "model_input_dimension"
+            ]
+            normalization = self.training_configuration["normalization"]
+            transformation = self.training_configuration["transformation"]
+            training_problem = self.training_configuration["problem_type"]
+
+            train_data_set = getattr(getattr(ml_type, training_problem), "Dataloader")(
+                root, model_input_dimension, "train", transformation, normalization
+            )
+
+            val_data_set = getattr(getattr(ml_type, training_problem), "Dataloader")(
+                root, model_input_dimension, "val", transformation, normalization
+            )
+
+            test_data_set = getattr(getattr(ml_type, training_problem), "Dataloader")(
+                root, model_input_dimension, "test", transformation, normalization
+            )
+            return train_data_set, val_data_set, test_data_set
+        except Exception as ex:
+            self.logger.log_exception(ex)
+            sys.exit(str(traceback.format_exc()))
+
+    def load_loader(self):
+        try:
+            batch_size = self.training_configuration["initial_assignment"]["batch_size"]
+            train_loader = DataLoader(
+                dataset=self.train_data_set,
+                shuffle=True,
+                num_workers=0,
+                batch_size=batch_size,
+                pin_memory=torch.cuda.is_available(),
+            )
+
+            val_loader = DataLoader(
+                dataset=self.val_data_set,
+                shuffle=True,
+                num_workers=0,
+                batch_size=batch_size,
+                pin_memory=torch.cuda.is_available(),
+            )
+
+            test_loader = DataLoader(
+                dataset=self.test_data_set,
+                shuffle=True,
+                num_workers=0,
+                batch_size=batch_size,
+                pin_memory=torch.cuda.is_available(),
+            )
+            self.logger.log_info("Inference and Data loader - DataLoader complete")
+
+            return train_loader, val_loader, test_loader
+        except Exception as ex:
+            self.logger.log_exception(ex)
+            sys.exit(str(traceback.format_exc()))
 
     @staticmethod
     def get_gpu_device_ids():

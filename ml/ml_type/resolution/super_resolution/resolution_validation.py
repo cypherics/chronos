@@ -1,7 +1,7 @@
 import numpy as np
 from torchvision.utils import make_grid
 
-from ml.ml_type.Base import BaseValidation
+from ml.base import BaseValidation
 
 
 class ResolutionValidation(BaseValidation):
