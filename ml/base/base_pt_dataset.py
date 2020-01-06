@@ -6,7 +6,7 @@ from pathlib import Path
 from torch.utils.data import Dataset
 
 from utils.print_format import print_exception
-from data_processing import pre_processing, augmentation
+from data_ops import pre_processing, augmentation
 
 from abc import ABCMeta
 

@@ -10,7 +10,7 @@ import tqdm
 from utils import date_time_utility, yaml_utility, print_format, torch_tensor_conversion
 from utils.directory_utils import path_creation
 
-from utils.visdom_data_visualization import DataViz
+from visdom_viz.data_visualization import DataViz
 
 
 class TrainerPt:
