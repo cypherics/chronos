@@ -1,5 +1,5 @@
-from ml.ml_type.sem_seg.network_module import SubPixel
-from ml.ml_type.sem_seg.network_module.bilinear_up_sampling import BiLinearUpSampling
+from ml.ml_module import SubPixel
+from ml.ml_module import BiLinearUpSampling
 
 
 class UpSampleConvolution:

@@ -1,7 +1,7 @@
 from torch import nn
 
 from torchvision import models
-from ml.ml_type.sem_seg.network_module import GCN, BoundaryRefine, UpSampleConvolution
+from ml.ml_module import GCN, BoundaryRefine, UpSampleConvolution
 
 
 class GCNModel(nn.Module):

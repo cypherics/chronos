@@ -1,6 +1,6 @@
 from torch import nn
 from torchvision import models
-from ml.ml_type.sem_seg.network_module import (
+from ml.ml_module import (
     SpatialAttentionFusionModule,
     GCN,
     SEModule,
