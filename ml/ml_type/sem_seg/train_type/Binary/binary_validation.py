@@ -3,11 +3,11 @@ import torch
 from torchvision.utils import make_grid
 
 from ml.ml_type.sem_seg.metrics import iou, precision, recall, f_score
-from ml.base.base_validation import BaseValidation
+from ml.base.base_pt_validation import BaseValidationPt
 from utils.torch_tensor_conversion import cuda_variable
 
 
-class BinaryValidation(BaseValidation):
+class BinaryValidation(BaseValidationPt):
     def __init__(self):
         self.jaccard = []
         self.precision_metric = []

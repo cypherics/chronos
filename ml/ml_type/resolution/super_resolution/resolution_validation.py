@@ -1,10 +1,10 @@
 import numpy as np
 from torchvision.utils import make_grid
 
-from ml.base import BaseValidation
+from ml.base import BaseValidationPt
 
 
-class ResolutionValidation(BaseValidation):
+class ResolutionValidation(BaseValidationPt):
     def compute_metric(self, **kwargs):
         pass
 

@@ -1,2 +1,2 @@
-from ml.base.base_data_loader import BaseDataLoader
-from ml.base.base_validation import BaseValidation
+from ml.base.base_pt_dataset import BaseDataSetPt
+from ml.base.base_pt_validation import BaseValidationPt

@@ -6,7 +6,6 @@ from scipy import misc
 import torch
 
 from torch import nn
-from torchvision.utils import make_grid
 
 from utils.directory_utils.directory_handler import make_directory
 from utils.print_format import (
@@ -18,7 +17,7 @@ from utils.torch_tensor_conversion import cuda_variable
 from abc import ABCMeta, abstractmethod
 
 
-class BaseValidation(metaclass=ABCMeta):
+class BaseValidationPt(metaclass=ABCMeta):
     @abstractmethod
     def compute_metric(self, **kwargs):
         raise NotImplementedError

@@ -1,9 +1,9 @@
-from ml.base.base_data_loader import BaseDataLoader
+from ml.base.base_pt_dataset import BaseDataSetPt
 from utils.data_image_and_label_loader import load_image, load_mask
 from utils.torch_tensor_conversion import to_input_image_tensor, to_label_image_tensor
 
 
-class BinaryDataLoader(BaseDataLoader):
+class BinaryDataSet(BaseDataSetPt):
     def __init__(
         self,
         root,

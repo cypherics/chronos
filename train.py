@@ -28,6 +28,8 @@ def main():
     loader_pt = LoaderPt(training_configurations, log)
     print_format.print_tab_fancy("Model", "yellow")
     model_pt = ModelPt(training_configurations, log)
+    for inp in enumerate(loader_pt.train_loader):
+        print(inp)
     trainer_pt = TrainerPt(
         loader_pt, model_pt, training_configurations, log, training_path
     )

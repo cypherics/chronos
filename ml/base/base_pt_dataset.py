@@ -11,7 +11,7 @@ from data_processing import pre_processing, augmentation
 from abc import ABCMeta
 
 
-class BaseDataLoader(Dataset, metaclass=ABCMeta):
+class BaseDataSetPt(Dataset, metaclass=ABCMeta):
     def __init__(
         self,
         root,
