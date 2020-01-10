@@ -5,19 +5,19 @@ from torch.nn import functional as F
 from utils.torch_tensor_conversion import cuda_variable
 
 
-def calculate_jaccard_binary(outputs, targets):
+def calculate_iou(outputs, targets):
     eps = 1e-15
-    jaccard_target = targets
-    jaccard_output = outputs
+    iou_target = targets
+    iou_output = outputs
 
-    intersection = (jaccard_output * jaccard_target).sum()
-    union = jaccard_output.sum() + jaccard_target.sum()
+    intersection = (iou_output * iou_target).sum()
+    union = iou_output.sum() + iou_target.sum()
 
-    jaccard = torch.log((intersection + eps) / (union - intersection + eps))
-    return jaccard
+    iou = torch.log((intersection + eps) / (union - intersection + eps))
+    return iou
 
 
-def calculate_dice_binary(outputs, targets):
+def calculate_dice(outputs, targets):
     dice = (2.0 * (outputs * targets).sum() + 1) / (outputs.sum() + targets.sum() + 1)
     return dice
 
@@ -31,10 +31,10 @@ def get_grad(gt_sorted):
     gts = gt_sorted.sum()
     intersection = gts - gt_sorted.float().cumsum(0)
     union = gts + (1 - gt_sorted).float().cumsum(0)
-    jaccard = 1.0 - intersection / union
+    iou = 1.0 - intersection / union
     if p > 1:  # cover 1-pixel case
-        jaccard[1:p] = jaccard[1:p] - jaccard[0:-1]
-    return jaccard
+        iou[1:p] = iou[1:p] - iou[0:-1]
+    return iou
 
 
 def binary_scores(scores, labels, ignore=None):

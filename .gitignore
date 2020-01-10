@@ -155,3 +155,5 @@ dmypy.json
 
 # mpeltonen/sbt-idea plugin
 .idea_modules/
+
+checkpoints/

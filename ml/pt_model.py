@@ -6,6 +6,7 @@ import torch
 
 from utils.directory_utils import directory_handler
 import ml.ml_type as ml_type
+from utils.multi_gpu import adjust_model_keys, get_gpu_device_ids
 
 
 class ModelPt:
@@ -105,25 +106,17 @@ class ModelPt:
             str(model_path),
         )
 
-    @staticmethod
-    def get_gpu_device_ids():
-        device_id = list()
-        separator = ","
-        gpu_device_available = torch.cuda.device_count()
-        for i in range(gpu_device_available):
-            device_id.append(str(i))
-        device_id = separator.join(device_id)
-        return device_id
-
     def load_parallel_model(self, model):
         try:
             if torch.cuda.is_available():
-                device_ids = self.get_gpu_device_ids()
+                device_ids = get_gpu_device_ids()
                 if device_ids:
                     device_ids = list(map(int, device_ids.split(",")))
                 else:
                     device_ids = None
                 model = torch.nn.DataParallel(model, device_ids=device_ids).cuda()
+                return model
+            else:
                 return model
         except Exception as ex:
             self.logger.log_exception(ex)
@@ -139,12 +132,7 @@ class ModelPt:
 
     def load_current_model_state(self, model, state):
         try:
-            model_cuda = {
-                [".".join(key.split(".")[1:])][0]: value
-                for key, value in state["model"].items()
-                if "module" in key.split(".")[0]
-            }
-
+            model_cuda = adjust_model_keys(state)
             model.load_state_dict(model_cuda)
             model = self.load_parallel_model(model)
             return model
