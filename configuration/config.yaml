@@ -1,0 +1,22 @@
+root : /home/palnak/Dataset/scratch_inria
+experiment_name : testbob1
+transfer_weights_path :
+training_state: DEFAULT
+problem_type : binary_segmentation
+
+initial_assignment:
+  model_input_dimension: [256, 256]
+  n_epochs: 20
+  batch_size: 2
+
+transformation :
+  DualCompose:
+    transform_1:
+      to_perform:
+        - HorizontalFlip
+        - VerticalFlip
+        - RandomFilter
+      transform_type: OneOf
+      augment_prob: 0.5
+
+normalization : DivideBy255

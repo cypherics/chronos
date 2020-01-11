@@ -4,15 +4,15 @@ from ml.pt_trainer import TrainerPt
 from utils import yaml_utility, print_format, path_creation
 from utils.logger import Logger
 
-CONFIG = "ml/configuration/training_config.yaml"
-CONFIG_PARAMETER_ASSIGN = "ml/configuration/training_parameter_assign.yaml"
+CONFIG = "configuration/config.yaml"
+CONFIG_PARAMETER_ASSIGN = "configuration/parameters.yaml"
 
 
 def main():
     config = yaml_utility.read_config_yaml(CONFIG)
     config_parameter_assign = yaml_utility.read_config_yaml(CONFIG_PARAMETER_ASSIGN)
 
-    training_configurations = yaml_utility.current_run_config(
+    training_configurations = yaml_utility.extract_training_config(
         config, config_parameter_assign
     )
 

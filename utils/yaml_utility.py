@@ -13,26 +13,26 @@ def write_config_yaml(data, yaml_file_object):
     yaml.dump(data, yaml_file_object, default_flow_style=False)
 
 
-def current_run_config(config, parameter_config):
-    training_configurations = dict()
-    training_state = parameter_config["training_state"]
+def extract_training_config(config, parameter):
+    training_state = config["training_state"]
+    train_config = dict()
+    parameter_config = dict()
+    for sec in config:
+        train_config[sec] = config[sec]
+
+    for sec in parameter:
+        for key, value in parameter[sec].items():
+            parameter_config[sec] = key
+            parameter_config[key] = value
+
+    training_configurations = {**train_config, **parameter_config}
+
     if training_state == "RESUME":
         resume_config_path = get_resume_version_config(
-            config["experiment_name"], config["model"]
+            training_configurations["experiment_name"], training_configurations["model"]
         )
         resume_config = read_config_yaml(resume_config_path)
         resume_config["training_state"] = training_state
-        training_configurations = resume_config
+        return resume_config
     else:
-        for key, value in config.items():
-            training_configurations[key] = value
-            if key in parameter_config:
-                if value is None:
-                    training_configurations[value] = None
-                else:
-                    training_configurations[value] = parameter_config[key][value]
-
-        for key, value in parameter_config.items():
-            if key not in training_configurations:
-                training_configurations[key] = value
-    return training_configurations
+        return training_configurations

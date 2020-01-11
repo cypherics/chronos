@@ -1,0 +1,23 @@
+model:
+  BinaryDLinkNetExtractor:
+    num_classes: 1
+    pre_trained_image_net: True
+    res_net_to_use: resnet34
+
+loss:
+  JaccardLoss:
+    jaccard_weight: 1
+
+scheduler :
+  PolyLrDecay:
+    decay_after_epoch: 1
+    power: 0.9
+    max_epochs: 20
+
+optimizer:
+  SGD:
+    momentum: 0
+    dampening: 0
+    weight_decay: 0
+    nesterov: False
+    lr: 0.0001

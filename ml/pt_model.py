@@ -5,7 +5,6 @@ import traceback
 import torch
 
 from utils import directory_handler
-import ml.ml_type as ml_type
 from ml.commons.utils.multi_gpu import adjust_model_keys, get_gpu_device_ids
 
 
