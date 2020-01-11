@@ -1,3 +1,4 @@
+import importlib
 import sys
 import traceback
 
@@ -7,7 +8,7 @@ from torch.utils.data import DataLoader
 
 from utils import print_format
 import ml.ml_type as ml_type
-from ml import scheduler as lr_helper
+from ml.commons import scheduler as lr_helper
 
 
 class LoaderPt:
@@ -23,12 +24,13 @@ class LoaderPt:
 
     def load_validation(self):
         try:
-            problem_type = self.training_configuration["problem_type"]
-            current_problem_type_loader = getattr(
-                getattr(ml_type, problem_type), "Validation"
-            )()
+            training_type = self.training_configuration["problem_type"]
+            module_name = "ml.ml_type." + training_type
+            importlib.import_module(module_name)
+            package = importlib.import_module(".dataset", package=module_name)
+            current_problem_type_loader = getattr(package, "Validation")()
             self.logger.log_info(
-                "Validation - {} Problem Type loaded".format(problem_type)
+                "Validation - {} Problem Type loaded".format(training_type)
             )
 
             return current_problem_type_loader
@@ -46,15 +48,18 @@ class LoaderPt:
             transformation = self.training_configuration["transformation"]
             training_problem = self.training_configuration["problem_type"]
 
-            train_data_set = getattr(getattr(ml_type, training_problem), "Dataloader")(
+            module_name = "ml.ml_type." + training_problem
+            importlib.import_module(module_name)
+            package = importlib.import_module(".dataset", package=module_name)
+            train_data_set = getattr(package, "Dataloader")(
                 root, model_input_dimension, "train", transformation, normalization
             )
 
-            val_data_set = getattr(getattr(ml_type, training_problem), "Dataloader")(
+            val_data_set = getattr(package, "Dataloader")(
                 root, model_input_dimension, "val", transformation, normalization
             )
 
-            test_data_set = getattr(getattr(ml_type, training_problem), "Dataloader")(
+            test_data_set = getattr(package, "Dataloader")(
                 root, model_input_dimension, "test", transformation, normalization
             )
             return train_data_set, val_data_set, test_data_set
@@ -99,7 +104,13 @@ class LoaderPt:
         try:
             loss_name = self.training_configuration["loss"]
             loss_param = self.training_configuration[loss_name]
-            loss = getattr(ml_type, loss_name)(**loss_param)
+            training_problem = self.training_configuration["problem_type"]
+
+            module_name = "ml.ml_type." + training_problem
+            importlib.import_module(module_name)
+            package = importlib.import_module(".loss", package=module_name)
+
+            loss = getattr(package, loss_name)(**loss_param)
             self.logger.log_info(
                 "ParameterLoader - {} loss Loaded with parameters: {}".format(
                     loss_name, loss_param

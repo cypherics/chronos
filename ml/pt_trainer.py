@@ -7,10 +7,10 @@ import traceback
 import numpy as np
 import tqdm
 
-from utils import date_time_utility, yaml_utility, print_format, torch_tensor_conversion
-from utils.directory_utils import path_creation
+from utils import date_time_utility, yaml_utility, print_format, path_creation
+from ml.commons.utils import torch_tensor_conversion
 
-from visdom_viz.data_visualization import DataViz
+from ml.commons.visdom_viz.data_visualization import DataViz
 
 
 class TrainerPt:

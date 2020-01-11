@@ -1,8 +1,7 @@
 from ml.pt_model import ModelPt
 from ml.pt_loader import LoaderPt
 from ml.pt_trainer import TrainerPt
-from utils import yaml_utility, print_format
-from utils.directory_utils import path_creation
+from utils import yaml_utility, print_format, path_creation
 from utils.logger import Logger
 
 CONFIG = "ml/configuration/training_config.yaml"

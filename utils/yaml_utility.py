@@ -1,6 +1,6 @@
 import yaml
 
-from utils.directory_utils.directory_handler import get_resume_version_config
+from utils.directory_handler import get_resume_version_config
 
 
 def read_config_yaml(file_path: str) -> dict:

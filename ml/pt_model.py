@@ -1,12 +1,12 @@
+import importlib
 import sys
 import traceback
 
 import torch
 
-
-from utils.directory_utils import directory_handler
+from utils import directory_handler
 import ml.ml_type as ml_type
-from utils.multi_gpu import adjust_model_keys, get_gpu_device_ids
+from ml.commons.utils.multi_gpu import adjust_model_keys, get_gpu_device_ids
 
 
 class ModelPt:
@@ -21,7 +21,11 @@ class ModelPt:
             model_param = self.training_configuration[
                 self.training_configuration["model"]
             ]
-            model = getattr(ml_type, model_name)(**model_param)
+            training_problem = self.training_configuration["problem_type"]
+            module_name = "ml.ml_type." + training_problem
+            importlib.import_module(module_name)
+            package = importlib.import_module(".network", package=module_name)
+            model = getattr(package, model_name)(**model_param)
             self.logger.log_info(
                 "Model Loader -  {} load success with parameters: {}".format(
                     model_name, model_param
