@@ -1,5 +1,5 @@
 import sys
-
+import numpy as np
 from pathlib import Path
 
 from torch.utils.data import Dataset
@@ -9,6 +9,7 @@ from ml.commons.utils.image import (
     pad_image,
     get_random_crop_x_and_y,
     crop_image,
+    load_image,
 )
 from utils.print_format import print_exception
 from ml.commons.utils import normalizer, augmentation
@@ -40,18 +41,45 @@ class BaseDataSetPt(Dataset, metaclass=ABCMeta):
         self.labels = sorted(list((self.root / self.mode / "labels").glob("*")))
 
     def __len__(self):
-        raise NotImplementedError
+        if len(self.images) != 0:
+            return len(self.images)
+        else:
+            return len(self.labels)
 
     def __getitem__(self, idx):
+
+        if self.mode in ["train", "val"]:
+            img, _ = self.read_data(idx, self.images)
+            mask, _ = self.read_data(idx, self.labels)
+
+            input_dictionary = self.perform_image_operation_train_and_val(
+                img=img, mask=mask
+            )
+            assert isinstance(input_dictionary, dict), "Return type should be dict"
+
+            assert (
+                "image" in input_dictionary and "label" in input_dictionary
+            ), "while passing image use key-image and for label use key-label"
+
+            return input_dictionary
+
+        elif self.mode == "test":
+            img, file_name = self.read_data(idx, self.images)
+            input_dictionary = self.perform_image_operation_test(img=img)
+            assert isinstance(input_dictionary, dict), "Return type should be dict"
+            assert "image" in input_dictionary, "while passing image use key-image"
+
+            return input_dictionary, str(file_name)
+        else:
+            raise NotImplementedError
+
+    def perform_image_operation_train_and_val(self, **kwargs) -> dict:
         raise NotImplementedError
 
-    def perform_image_operation_train_and_val(self, **kwargs):
+    def perform_image_operation_test(self, **kwargs) -> dict:
         raise NotImplementedError
 
-    def perform_image_operation_test(self, **kwargs):
-        raise NotImplementedError
-
-    def get_label_normalization(self, **kwargs):
+    def get_label_normalization(self, **kwargs) -> np.ndarray:
         raise NotImplementedError
 
     def load_transformation(self, transformation_param):
@@ -133,3 +161,12 @@ class BaseDataSetPt(Dataset, metaclass=ABCMeta):
         if self.mode == "train":
             img, mask = self.transform(img, mask)
         return img, mask
+
+    @staticmethod
+    def read_data(idx, data_list):
+        if len(data_list) != 0:
+            image_file_name = data_list[idx]
+            image = load_image(str(image_file_name))
+            return image, image_file_name
+        else:
+            return None, None

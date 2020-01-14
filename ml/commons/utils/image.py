@@ -40,3 +40,9 @@ def pad_image(img: np.ndarray, limit: int):
         img, limit, limit, limit, limit, borderType=cv2.BORDER_REFLECT_101
     )
     return img
+
+
+def perform_scale(img, dimension, interpolation=cv2.INTER_NEAREST):
+    new_height, new_width = dimension
+    img = cv2.resize(img, (new_width, new_height), interpolation=interpolation)
+    return img

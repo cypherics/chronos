@@ -202,9 +202,6 @@ class ReFineNet(nn.Module):
         elif backbone_to_use == "resnet34":
             layers_features = [64, 128, 256, 512]
 
-        elif backbone_to_use == "dense_net_121":
-            layers_features = [256, 512, 1024, 1024]
-
         else:
             raise NotImplementedError
 
