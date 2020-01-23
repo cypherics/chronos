@@ -234,7 +234,9 @@ class TrainerPt:
         data_viz = DataViz(
             env_name=str(
                 self.training_configuration["experiment_name"]
+                + str("_")
                 + self.training_configuration["model"]
+                + str("_")
                 + self.version
             ),
             logger=self.logger,

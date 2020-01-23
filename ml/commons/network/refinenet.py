@@ -82,10 +82,7 @@ class MultiResolutionFusion(nn.Module):
             )
             refine_block_features = self.up_sample(refine_block_features)
 
-            if self.fusion_module is not None:
-                return self.fusion_module(backbone_features, refine_block_features)
-            else:
-                return refine_block_features + backbone_features
+            return refine_block_features + backbone_features
 
 
 class ChainedResidualPooling(nn.Module):

@@ -2,7 +2,7 @@ root : /home/palnak/Dataset/scratch_inria
 experiment_name : testbob1
 transfer_weights_path :
 training_state: DEFAULT
-problem_type : binary_segmentation
+problem_type : building_boundary
 
 initial_assignment:
   model_input_dimension: [256, 256]

@@ -1,3 +1,6 @@
+import numpy as np
+
+
 def iou(true_values, predicted_values):
     epsilon = 1e-15
     intersection = (predicted_values * true_values).sum(dim=-2).sum(dim=-1)
@@ -27,3 +30,29 @@ def f_score(true_values, predicted_values):
         precision_metric + recall_metric + 1e-8
     )
     return f_score_metric
+
+
+def calculate_confusion_matrix_from_arrays(prediction, ground_truth, nr_labels):
+    replace_indices = np.vstack((ground_truth.flatten(), prediction.flatten())).T
+    confusion_matrix, _ = np.histogramdd(
+        replace_indices,
+        bins=(nr_labels, nr_labels),
+        range=[(0, nr_labels), (0, nr_labels)],
+    )
+    confusion_matrix = confusion_matrix.astype(np.uint32)
+    return confusion_matrix
+
+
+def calculate_iou_on_confusion_matrix(confusion_matrix):
+    inter_over_union_list = []
+    for index in range(confusion_matrix.shape[0]):
+        true_positives = confusion_matrix[index, index]
+        false_positives = confusion_matrix[:, index].sum() - true_positives
+        false_negatives = confusion_matrix[index, :].sum() - true_positives
+        denominator = true_positives + false_positives + false_negatives
+        if denominator == 0:
+            intersection_over_union = 0
+        else:
+            intersection_over_union = float(true_positives) / denominator
+        inter_over_union_list.append(intersection_over_union)
+    return inter_over_union_list

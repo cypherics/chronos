@@ -1,12 +1,16 @@
 model:
-  BinaryDLinkNetExtractor:
-    num_classes: 1
+  BuildingBoundaryRefineNetExtractor:
+    backbone_to_use: resnet34
+    top_layers_trainable: True
+    classes: 2
     pre_trained_image_net: True
-    res_net_to_use: resnet34
+    final_mode: bilinear
+
 
 loss:
-  JaccardLoss:
-    jaccard_weight: 1
+  BuildingBoundarySigmoidLoss:
+    building_weight: 1
+    boundary_weight: 1
 
 scheduler :
   PolyLrDecay:
