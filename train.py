@@ -1,16 +1,15 @@
+import fire
+
 from ml.pt_model import ModelPt
 from ml.pt_loader import LoaderPt
 from ml.pt_trainer import TrainerPt
 from utils import yaml_utility, print_format, path_creation
 from utils.logger import Logger
 
-CONFIG = "configuration/config.yaml"
-CONFIG_PARAMETER_ASSIGN = "configuration/parameters.yaml"
 
-
-def main():
-    config = yaml_utility.read_config_yaml(CONFIG)
-    config_parameter_assign = yaml_utility.read_config_yaml(CONFIG_PARAMETER_ASSIGN)
+def main(config, parameter):
+    config = yaml_utility.read_config_yaml(config)
+    config_parameter_assign = yaml_utility.read_config_yaml(parameter)
 
     training_configurations = yaml_utility.extract_training_config(
         config, config_parameter_assign
@@ -35,4 +34,5 @@ def main():
     trainer_pt.training()
 
 
-main()
+if __name__ == '__main__':
+    fire.Fire(main)
