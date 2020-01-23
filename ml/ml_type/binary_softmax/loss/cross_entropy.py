@@ -4,7 +4,7 @@ from ml.base import BaseLoss
 
 
 class CrossEntropyLoss2d(BaseLoss):
-    def __init__(self):
+    def __init__(self, **kwargs):
         super().__init__()
 
         self.loss = nn.NLLLoss()

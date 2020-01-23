@@ -7,6 +7,7 @@ import torch
 
 from torch import nn
 
+from utils.dictionary_set import set_key
 from utils.directory_handler import make_directory
 from utils.print_format import (
     colored_single_string_print_with_brackets,
@@ -19,12 +20,17 @@ from abc import ABCMeta, abstractmethod
 
 class BaseValidationPt(metaclass=ABCMeta):
     @abstractmethod
-    def compute_metric(self, **kwargs):
+    def compute_metric(self, **kwargs) -> dict:
         raise NotImplementedError
 
-    @abstractmethod
-    def get_computed_mean_metric(self, **kwargs):
-        raise NotImplementedError
+    @staticmethod
+    def compute_mean_metric(metric: dict):
+        mean_metric = dict()
+        for key, value in metric.items():
+            assert type(value) is list
+            mean_value = np.mean(value)
+            mean_metric = set_key(mean_metric, key, mean_value)
+        return mean_metric
 
     @abstractmethod
     def generate_inference_output(self, **kwargs):
@@ -34,6 +40,7 @@ class BaseValidationPt(metaclass=ABCMeta):
     def perform_validation(self, model: nn.Module, loss_function, valid_loader):
         model.eval()
         losses = []
+        metric = dict()
         for input_data in valid_loader:
             input_data = cuda_variable(input_data)
 
@@ -43,12 +50,15 @@ class BaseValidationPt(metaclass=ABCMeta):
 
             # TODO make get_prediction_as_per_instance abstract
             outputs = self.get_prediction_as_per_instance(outputs)
-            self.compute_metric(targets=targets, outputs=outputs)
+            met = self.compute_metric(targets=targets, outputs=outputs)
+            if met is not None:
+                for key, value in met.items():
+                    metric = set_key(metric, key, value)
 
         valid_loss = np.mean(losses)
         valid_loss = {"valid_loss": valid_loss}
 
-        validation_metric = self.get_computed_mean_metric()
+        validation_metric = self.compute_mean_metric(metric)
         metrics = {**valid_loss, **validation_metric}
 
         colored_single_string_print_with_brackets(

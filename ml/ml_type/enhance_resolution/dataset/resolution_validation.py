@@ -6,10 +6,7 @@ from ml.base import BaseValidationPt
 
 class ResolutionValidation(BaseValidationPt):
     def compute_metric(self, **kwargs):
-        pass
-
-    def get_computed_mean_metric(self, **kwargs):
-        return 0
+        return None
 
     def generate_inference_output(self, img):
         img = img.data.cpu().numpy()

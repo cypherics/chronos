@@ -7,9 +7,7 @@ class BinarySoftmaxDLinkNetExtractor(BaseNetwork):
         super().__init__(**kwargs)
 
         self.model = DLinkNet34(
-            2,
-            kwargs["res_net_to_use"],
-            kwargs["pre_trained_image_net"],
+            2, kwargs["res_net_to_use"], kwargs["pre_trained_image_net"]
         )
 
     def forward_propagate(self, input_feature):

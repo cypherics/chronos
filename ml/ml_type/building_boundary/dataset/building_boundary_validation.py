@@ -8,17 +8,6 @@ from ml.commons.utils.torch_tensor_conversion import cuda_variable
 
 
 class BuildingBoundaryValidation(BaseValidationPt):
-    def __init__(self):
-        self.iou_building = list()
-        self.precision_building = list()
-        self.recall_building = list()
-        self.f_score_building = list()
-
-        self.iou_boundary = list()
-        self.precision_boundary = list()
-        self.recall_boundary = list()
-        self.f_score_boundary = list()
-
     def compute_metric(self, targets, outputs):
         building_targets = targets[:, 0:1, :, :]
         boundary_targets = targets[:, 1:2, :, :]
@@ -26,58 +15,43 @@ class BuildingBoundaryValidation(BaseValidationPt):
         building_outputs = outputs[:, 0:1, :, :]
         boundary_outputs = outputs[:, 1:2, :, :]
 
-        self.iou_building += [
-            iou(building_targets, (building_outputs > 0).float()).item()
-        ]
-        self.precision_building += [
-            precision(building_targets, (building_outputs > 0).float()).item()
-        ]
-        self.recall_building += [
-            recall(building_targets, (building_outputs > 0).float()).item()
-        ]
-        self.f_score_building += [
-            f_score(building_targets, (building_outputs > 0).float()).item()
-        ]
+        iou_building = iou(building_targets, (building_outputs > 0).float()).item()
 
-        self.iou_boundary += [
-            iou(boundary_targets, (boundary_outputs > 0).float()).item()
-        ]
-        self.precision_boundary += [
-            precision(building_targets, (boundary_outputs > 0).float()).item()
-        ]
-        self.recall_boundary += [
-            recall(boundary_targets, (boundary_outputs > 0).float()).item()
-        ]
-        self.f_score_boundary += [
-            f_score(boundary_targets, (boundary_outputs > 0).float()).item()
-        ]
+        precision_building = precision(
+            building_targets, (building_outputs > 0).float()
+        ).item()
 
-    def get_computed_mean_metric(self, **kwargs):
-        self.iou_building = np.mean(self.iou_building)
-        self.precision_building = np.mean(self.precision_building)
-        self.recall_building = np.mean(self.recall_building)
-        self.f_score_building = np.mean(self.f_score_building)
+        recall_building = recall(
+            building_targets, (building_outputs > 0).float()
+        ).item()
 
-        self.iou_boundary = np.mean(self.iou_boundary)
-        self.precision_boundary = np.mean(self.precision_boundary)
-        self.recall_boundary = np.mean(self.recall_boundary)
-        self.f_score_boundary = np.mean(self.f_score_boundary)
+        f_score_building = f_score(
+            building_targets, (building_outputs > 0).float()
+        ).item()
 
-        metrics = self.generate_dictionary()
-        self._re_initialize_metric_variables()
+        iou_boundary = iou(boundary_targets, (boundary_outputs > 0).float()).item()
 
-        return metrics
+        precision_boundary = precision(
+            building_targets, (boundary_outputs > 0).float()
+        ).item()
 
-    def generate_dictionary(self):
+        recall_boundary = recall(
+            boundary_targets, (boundary_outputs > 0).float()
+        ).item()
+
+        f_score_boundary = f_score(
+            boundary_targets, (boundary_outputs > 0).float()
+        ).item()
+
         metrics = {
-            "Building IOU": self.iou_building,
-            "Building Precision": self.precision_building,
-            "Building Recall": self.recall_building,
-            "Building F_Score": self.f_score_building,
-            "Boundary IOU": self.iou_boundary,
-            "Boundary Precision": self.precision_boundary,
-            "Boundary Recall": self.recall_boundary,
-            "Boundary F_Score": self.f_score_boundary,
+            "Building IOU": iou_building,
+            "Building Precision": precision_building,
+            "Building Recall": recall_building,
+            "Building F_Score": f_score_building,
+            "Boundary IOU": iou_boundary,
+            "Boundary Precision": precision_boundary,
+            "Boundary Recall": recall_boundary,
+            "Boundary F_Score": f_score_boundary,
         }
         return metrics
 
@@ -111,12 +85,6 @@ class BuildingBoundaryValidation(BaseValidationPt):
         ]
 
         return merged_image
-
-    def _re_initialize_metric_variables(self):
-        self.jaccard = []
-        self.precision_metric = []
-        self.recall_metric = []
-        self.f_score_metric = []
 
     @staticmethod
     def create_prediction_grid(inputs, prediction):
