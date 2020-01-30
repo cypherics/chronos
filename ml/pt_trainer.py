@@ -10,7 +10,7 @@ import tqdm
 from utils import date_time_utility, yaml_utility, print_format, path_creation
 from ml.commons.utils import torch_tensor_conversion
 
-from ml.commons.visdom_viz.data_visualization import DataViz
+from ml.commons.data_visualization import DataViz
 
 
 class TrainerPt:

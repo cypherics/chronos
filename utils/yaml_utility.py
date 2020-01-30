@@ -21,9 +21,12 @@ def extract_training_config(config, parameter):
         train_config[sec] = config[sec]
 
     for sec in parameter:
-        for key, value in parameter[sec].items():
-            parameter_config[sec] = key
-            parameter_config[key] = value
+        if parameter[sec] is None:
+            parameter_config[sec] = None
+        else:
+            for key, value in parameter[sec].items():
+                parameter_config[sec] = key
+                parameter_config[key] = value
 
     training_configurations = {**train_config, **parameter_config}
 

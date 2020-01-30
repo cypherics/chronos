@@ -1,5 +1,4 @@
 from torch import nn
-from torchvision import models
 from ml.commons.layers import UpSampleConvolution
 
 __reference__ = "https://github.com/GeorgeSeif/Semantic-Segmentation-Suite/blob/master/models/refine_net.py"
@@ -169,54 +168,24 @@ class RefineBlock(nn.Module):
 
 
 class ReFineNet(nn.Module):
-    def __init__(
-        self, backbone_to_use, pre_trained_image_net, top_layers_trainable=True
-    ):
+    def __init__(self, backbone_to_use_features):
         super().__init__()
-
-        if hasattr(models, backbone_to_use):
-            back_bone = getattr(models, backbone_to_use)(
-                pretrained=pre_trained_image_net
-            )
-
-            self.layer0 = nn.Sequential(
-                back_bone.conv1, back_bone.bn1, back_bone.relu, back_bone.maxpool
-            )
-            self.layer1 = back_bone.layer1
-            self.layer2 = back_bone.layer2
-            self.layer3 = back_bone.layer3
-            self.layer4 = back_bone.layer4
-        else:
-            raise ModuleNotFoundError
-
-        if not top_layers_trainable:
-            for param in back_bone.parameters():
-                param.requires_grad = False
-
-        if backbone_to_use == "resnet50":
-            layers_features = [256, 512, 1024, 2048]
-
-        elif backbone_to_use == "resnet34":
-            layers_features = [64, 128, 256, 512]
-
-        else:
-            raise NotImplementedError
 
         """
         section 3.1 -
             In practice each ResNet output is passed through one convolution layer to adapt the dimensionality
         """
         self.convolution_layer_4_dim_reduction = convolution_3x3(
-            in_planes=layers_features[-1], out_planes=512
+            in_planes=backbone_to_use_features[-1], out_planes=512
         )
         self.convolution_layer_3_dim_reduction = convolution_3x3(
-            in_planes=layers_features[-2], out_planes=256
+            in_planes=backbone_to_use_features[-2], out_planes=256
         )
         self.convolution_layer_2_dim_reduction = convolution_3x3(
-            in_planes=layers_features[-3], out_planes=256
+            in_planes=backbone_to_use_features[-3], out_planes=256
         )
         self.convolution_layer_1_dim_reduction = convolution_3x3(
-            in_planes=layers_features[-4], out_planes=256
+            in_planes=backbone_to_use_features[-4], out_planes=256
         )
 
         self.refine_block_4 = RefineBlock(in_planes=512, out_planes=512)
@@ -234,13 +203,12 @@ class ReFineNet(nn.Module):
             in_planes=256, out_planes=256
         )
 
-    def forward(self, x):
+    def forward(self, encoder_output: list):
 
-        layer_0_output = self.layer0(x)
-        layer_1_output = self.layer1(layer_0_output)  # 1/4
-        layer_2_output = self.layer2(layer_1_output)  # 1/8
-        layer_3_output = self.layer3(layer_2_output)  # 1/16
-        layer_4_output = self.layer4(layer_3_output)  # 1/32
+        layer_1_output = encoder_output[0]  # 1/4
+        layer_2_output = encoder_output[1]  # 1/8
+        layer_3_output = encoder_output[2]  # 1/16
+        layer_4_output = encoder_output[3]  # 1/32
 
         backbone_layer_4 = self.convolution_layer_4_dim_reduction(
             layer_4_output
@@ -268,23 +236,3 @@ class ReFineNet(nn.Module):
         )
 
         return residual_convolution_unit
-
-
-# if __name__ == "__main__":
-#     import torch
-#
-#     model = ReFineNet(
-#         backbone_to_use="dense_net_121",
-#         pre_trained_image_net=True,
-#         top_layers_trainable=True,
-#         fusion_module=False,
-#         se_rcu=False,
-#         final_mode="sub_pixel"
-#     )
-#     model.eval()
-#     image = torch.randn(2, 3, 384, 384)
-#     image_temp = torch.randn(2, 3, 288, 288)
-#     with torch.no_grad():
-#         output = model.forward({"image": image})
-#     a = tuple(output.shape)
-#     print(a)

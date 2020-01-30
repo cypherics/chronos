@@ -8,18 +8,20 @@ import numpy as np
 
 
 class DataViz:
-    def __init__(self, env_name, logger, flush_existing_env=False):
+    def __init__(self, env_name, logger, flush_existing_env=False, find_lr=False):
         self.env_name = env_name
-        self.port = 8000
+        self.port = 8080
         self.flush_existing_env = flush_existing_env
         self.logger = logger
-
-        self.image_plot = "test_images_plot"
-        self.epoch_loss_plot = "epoch_loss_plot"
-        self.learning_rate_plot = "lr_plot"
-
         self.viz_server, self.viz_process = self.create_viz_server()
-        self.create_viz_graph_object()
+        if find_lr:
+            self.lr_finder = "lr_finder"
+            self.create_viz_lr_finder_graph_object()
+        else:
+            self.image_plot = "test_images_plot"
+            self.epoch_loss_plot = "epoch_loss_plot"
+            self.learning_rate_plot = "lr_plot"
+            self.create_viz_training_graph_object()
 
     def create_viz_server(self):
         viz_process = subprocess.Popen(
@@ -57,7 +59,12 @@ class DataViz:
                 np.random.rand(*img_shape), opts=dict(title=title), win=win
             )
 
-    def create_viz_graph_object(self):
+    def create_viz_lr_finder_graph_object(self):
+        self.create_line_plot(
+            xlabel="LR", ylabel="Loss", title="LR Finder Graph", win=self.lr_finder
+        )
+
+    def create_viz_training_graph_object(self):
         self.create_line_plot(
             xlabel="Epoch",
             ylabel="Learning Rate",
@@ -110,6 +117,16 @@ class DataViz:
             torch.FloatTensor(predicted_images.swapaxes(0, -1).swapaxes(-1, 1)),
             win=self.image_plot,
             opts=dict(title="Test Images"),
+        )
+        self.save_viz()
+
+    def plot_lr_loss(self, lr, loss):
+        self.viz_server.line(
+            X=np.array([lr]),
+            Y=np.array([loss]),
+            win=self.lr_finder,
+            name="lr_finder",
+            update="append",
         )
         self.save_viz()
 
