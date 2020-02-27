@@ -9,10 +9,6 @@ from torch import nn
 
 from utils.dictionary_set import set_key
 from utils.directory_handler import make_directory
-from utils.print_format import (
-    colored_single_string_print_with_brackets,
-    tabular_print_handler,
-)
 from ml.commons.utils.torch_tensor_conversion import cuda_variable
 
 from abc import ABCMeta, abstractmethod
@@ -60,11 +56,6 @@ class BaseValidationPt(metaclass=ABCMeta):
 
         validation_metric = self.compute_mean_metric(metric)
         metrics = {**valid_loss, **validation_metric}
-
-        colored_single_string_print_with_brackets(
-            "  Validation Metrics  ", "green", attrs=["bold"]
-        )
-        tabular_print_handler(metrics, headers=["Metric", "Value"])
         return metrics
 
     @torch.no_grad()

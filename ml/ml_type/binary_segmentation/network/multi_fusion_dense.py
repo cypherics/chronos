@@ -8,7 +8,7 @@ from torch import nn
 class Convolution3x3BNAct(nn.Module):
     def __init__(self, in_channel, out_channel):
         super().__init__()
-        self.bn = nn.BatchNorm2d(out_channel)
+        self.bn = nn.BatchNorm2d(out_channel, momentum=0.01)
         self.activation = nn.ReLU()
         self.convolution = nn.Conv2d(
             in_channel, out_channel, kernel_size=3, stride=1, padding=1, bias=False
@@ -21,7 +21,7 @@ class Convolution3x3BNAct(nn.Module):
         return x
 
 
-class SoftmaxDenseExtractor(BaseNetwork):
+class BinaryDenseMultiFusion(BaseNetwork):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -40,7 +40,7 @@ class SoftmaxDenseExtractor(BaseNetwork):
         )
         self.convolution_2 = Convolution3x3BNAct(in_channel=32, out_channel=32)
 
-        self.final = nn.Conv2d(32, 2, kernel_size=1)
+        self.final = nn.Conv2d(32, 1, kernel_size=1)
 
     def forward_propagate(self, input_feature):
         x = input_feature["image"]
@@ -50,10 +50,10 @@ class SoftmaxDenseExtractor(BaseNetwork):
         # final = F.interpolate(
         #     self.final(decoder_output), scale_factor=4, mode="bilinear"
         # )
-        inter_1 = F.interpolate(decoder_output, scale_factor=2, mode="nearest")
+        inter_1 = F.interpolate(decoder_output, scale_factor=2, mode="bilinear")
         layer_1 = self.convolution_1(inter_1)
 
-        inter_2 = F.interpolate(layer_1, scale_factor=2, mode="nearest")
+        inter_2 = F.interpolate(layer_1, scale_factor=2, mode="bilinear")
         layer_2 = self.convolution_2(inter_2)
 
         final = self.final(layer_2)

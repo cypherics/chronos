@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 
-from ml.base import BaseLoss
+from ml.ml_type.base import BaseLoss
 
 
 def calculate_iou(outputs, targets):
@@ -26,8 +26,8 @@ class BuildingBoundarySigmoidLoss(BaseLoss):
     def compute_loss(self, outputs, **kwargs):
         targets = kwargs["label"]
         outputs = outputs.sigmoid()
-        loss = self.nll_loss(outputs[:, 0:1, :, :], targets[:, 0:1, :, :])
-        loss += self.nll_loss(outputs[:, 1:2, :, :], targets[:, 1:2, :, :])
+        loss = (1 - self.building_weight) * self.nll_loss(outputs[:, 0:1, :, :], targets[:, 0:1, :, :])
+        loss += ((1 - self.boundary_weight) * self.nll_loss(outputs[:, 1:2, :, :], targets[:, 1:2, :, :]))
 
         temp_targets = (targets[:, 0:1, :, :] == 1).float()
         loss -= self.building_weight * calculate_iou(

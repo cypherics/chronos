@@ -313,15 +313,14 @@ class MFRN(nn.Module):
         return final_layer
 
 
-#
-# if __name__ == "__main__":
-#     model = MFRN()
-#     model.eval()
-#     image = torch.randn(2, 3, 384, 384)
-#     image_temp = torch.randn(2, 3, 288, 288)
-#     from utility.torch_tensor_conversion import cuda_variable
-#
-#     with torch.no_grad():
-#         output = model.forward({"image": cuda_variable(image)})
-#     a = tuple(output.shape)
-#     print(a)
+if __name__ == "__main__":
+    model = MFRN()
+    model.eval()
+    image = torch.randn(2, 3, 384, 384)
+    image_temp = torch.randn(2, 3, 288, 288)
+    from ml.commons.utils.torch_tensor_conversion import cuda_variable
+
+    with torch.no_grad():
+        output = model.forward(image)
+    a = tuple(output.shape)
+    print(a)

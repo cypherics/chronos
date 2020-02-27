@@ -1,6 +1,6 @@
 import torch.nn as nn
 
-from ml.base import BaseLoss
+from ml.ml_type.base import BaseLoss
 
 
 class CrossEntropyLoss2d(BaseLoss):

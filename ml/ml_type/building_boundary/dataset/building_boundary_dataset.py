@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-from ml.base import BaseDataSetPt
+from ml.ml_type.base import BaseDataSetPt
 from ml.commons.utils.torch_tensor_conversion import (
     to_input_image_tensor,
     to_multi_output_label_image_tensor,

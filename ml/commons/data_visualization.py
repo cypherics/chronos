@@ -8,11 +8,10 @@ import numpy as np
 
 
 class DataViz:
-    def __init__(self, env_name, logger, flush_existing_env=False, find_lr=False):
+    def __init__(self, env_name, flush_existing_env=False, find_lr=False):
         self.env_name = env_name
         self.port = 8080
         self.flush_existing_env = flush_existing_env
-        self.logger = logger
         self.viz_server, self.viz_process = self.create_viz_server()
         if find_lr:
             self.lr_finder = "lr_finder"
@@ -21,6 +20,7 @@ class DataViz:
             self.image_plot = "test_images_plot"
             self.epoch_loss_plot = "epoch_loss_plot"
             self.learning_rate_plot = "lr_plot"
+            self.iteration_loss_plot = "iteration_loss_plot"
             self.create_viz_training_graph_object()
 
     def create_viz_server(self):
@@ -77,6 +77,13 @@ class DataViz:
             title="Epoch Loss Graph",
             win=self.epoch_loss_plot,
         )
+
+        self.create_line_plot(
+            xlabel="Iteration",
+            ylabel="Loss",
+            title="Iteration Loss Graph",
+            win=self.iteration_loss_plot,
+        )
         self.create_image_plot((3, 256, 512), title="Test Images", win=self.image_plot)
 
     def plot_learning_rate(self, lr, epoch):
@@ -108,6 +115,17 @@ class DataViz:
             Y=torch.Tensor([loss]).cpu(),
             win=self.epoch_loss_plot,
             name="validation",
+            update="append",
+        )
+        self.save_viz()
+
+    def plot_iteration_loss(self, loss, iteration):
+        # Plotting iteration Graph
+        self.viz_server.line(
+            X=torch.ones(1).cpu() * iteration,
+            Y=torch.Tensor([loss.item()]).cpu(),
+            win=self.iteration_loss_plot,
+            name="iteration_loss",
             update="append",
         )
         self.save_viz()

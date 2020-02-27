@@ -1,4 +1,3 @@
-import sys
 import numpy as np
 from pathlib import Path
 
@@ -11,10 +10,11 @@ from ml.commons.utils.image import (
     crop_image,
     load_image,
 )
-from utils.print_format import print_exception
 from ml.commons.utils import normalizer, augmentation
 
 from abc import ABCMeta
+
+from utils.logger import LogDecorator
 
 
 class BaseDataSetPt(Dataset, metaclass=ABCMeta):
@@ -82,33 +82,25 @@ class BaseDataSetPt(Dataset, metaclass=ABCMeta):
     def get_label_normalization(self, **kwargs) -> np.ndarray:
         raise NotImplementedError
 
+    @LogDecorator()
     def load_transformation(self, transformation_param):
-        try:
-            transform_type = list(transformation_param.keys())[0]
-            transformation_to_perform = list(transformation_param.values())[0]
-            number_of_transformation = len(list(transformation_param.values())[0])
+        transform_type = list(transformation_param.keys())[0]
+        transformation_to_perform = list(transformation_param.values())[0]
+        number_of_transformation = len(list(transformation_param.values())[0])
 
-            transformation_to_applied = list()
-            for i in range(number_of_transformation):
-                for _, transform_param in transformation_to_perform.items():
-                    transformation_to_applied.append(
-                        self._get_train_transformation(**transform_param)
-                    )
-            if number_of_transformation == 1:
-                transformation = transformation_to_applied[0]
-            else:
-                transformation = getattr(augmentation, transform_type)(
-                    transformation_to_applied, prob=0.5
+        transformation_to_applied = list()
+        for i in range(number_of_transformation):
+            for _, transform_param in transformation_to_perform.items():
+                transformation_to_applied.append(
+                    self._get_train_transformation(**transform_param)
                 )
-            return transformation
-
-        except Exception as ex:
-            print_exception(
-                exception=str(ex),
-                error_name="Configuration",
-                error_message="Configuring Transformation failed",
+        if number_of_transformation == 1:
+            transformation = transformation_to_applied[0]
+        else:
+            transformation = getattr(augmentation, transform_type)(
+                transformation_to_applied, prob=0.5
             )
-            sys.exit(1)
+        return transformation
 
     @staticmethod
     def _get_train_transformation(to_perform, transform_type, augment_prob):
@@ -122,18 +114,10 @@ class BaseDataSetPt(Dataset, metaclass=ABCMeta):
         return train_transformation
 
     @staticmethod
+    @LogDecorator()
     def load_normalization(normalization_name):
-        try:
-            normalization = getattr(normalizer, normalization_name)()
-            return normalization
-
-        except Exception as ex:
-            print_exception(
-                exception=str(ex),
-                error_name="Configuration",
-                error_message="Configuring normalization failed",
-            )
-            sys.exit(1)
+        normalization = getattr(normalizer, normalization_name)()
+        return normalization
 
     @staticmethod
     def handle_image_size(img, mask, model_input_dimension):

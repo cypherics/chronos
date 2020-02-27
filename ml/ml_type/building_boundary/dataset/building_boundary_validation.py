@@ -2,7 +2,7 @@ import numpy as np
 import torch
 from torchvision.utils import make_grid
 
-from ml.base import BaseValidationPt
+from ml.ml_type.base import BaseValidationPt
 from ml.commons.metrics import iou, precision, recall, f_score
 from ml.commons.utils.torch_tensor_conversion import cuda_variable
 

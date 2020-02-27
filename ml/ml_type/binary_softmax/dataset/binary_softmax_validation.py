@@ -2,12 +2,12 @@ import torch
 import numpy as np
 from torchvision.utils import make_grid
 
-from ml.base import BaseValidationPt
+from ml.ml_type.base import BaseValidationPt
 from ml.commons.metrics import (
     calculate_confusion_matrix_from_arrays,
     calculate_iou_on_confusion_matrix,
 )
-from ml.commons.utils.torch_tensor_conversion import cuda_variable
+from ml.commons.utils.torch_tensor_conversion import cuda_variable, to_tensor
 
 
 class BinarySoftmaxValidation(BaseValidationPt):
@@ -32,6 +32,8 @@ class BinarySoftmaxValidation(BaseValidationPt):
     @staticmethod
     def create_prediction_grid(inputs, prediction):
         prediction = torch.argmax(prediction.log_softmax(dim=1), dim=1)
+        prediction = to_tensor(np.expand_dims(prediction, 1))
+
         display_image = cuda_variable(inputs)
         display_image = torch.FloatTensor(display_image["image"].cpu())
         grid = make_grid(prediction, nrow=2, normalize=True)

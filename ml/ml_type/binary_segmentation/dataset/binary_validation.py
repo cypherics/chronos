@@ -3,7 +3,7 @@ import torch
 from torchvision.utils import make_grid
 
 from ml.commons.metrics import iou, precision, recall, f_score
-from ml.base.base_dataset.base_pt_validation import BaseValidationPt
+from ml.ml_type.base.base_dataset.base_pt_validation import BaseValidationPt
 from ml.commons.utils.torch_tensor_conversion import cuda_variable
 
 

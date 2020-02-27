@@ -1,6 +1,6 @@
 import torch
 
-from ml.base.base_loss.base_pt_loss import BaseLoss
+from ml.ml_type.base.base_loss.base_pt_loss import BaseLoss
 
 from torch import nn
 

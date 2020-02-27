@@ -21,7 +21,7 @@ class Convolution3x3BNAct(nn.Module):
         return x
 
 
-class SoftmaxDenseExtractor(BaseNetwork):
+class BuildingBoundaryExtractor(BaseNetwork):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -60,51 +60,3 @@ class SoftmaxDenseExtractor(BaseNetwork):
         x_out = final
 
         return x_out
-
-
-# if __name__ == "__main__":
-#     import torch
-#
-#     model = BinaryDenseMultiFusion(
-#         **{"pre_trained_pascal": "/home/palnak/Downloads/hrnetv2_w18_imagenet_pretrained.pth",
-#             "STAGE1": {
-#                 "NUM_CHANNELS": 64,
-#                 "BLOCK": "BOTTLENECK",
-#                 "NUM_BLOCKS": 4,
-#                 "FUSE_METHOD": "SUM",
-#                 "NUM_MODULES": 1,
-#                 "NUM_BRANCHES": 1,
-#             },
-#             "STAGE2": {
-#                 "NUM_CHANNELS": [18, 36],
-#                 "BLOCK": "BASIC",
-#                 "NUM_BLOCKS": [4, 4],
-#                 "FUSE_METHOD": "SUM",
-#                 "NUM_MODULES": 1,
-#                 "NUM_BRANCHES": 2,
-#             },
-#             "STAGE3": {
-#                 "NUM_CHANNELS": [18, 36, 72],
-#                 "BLOCK": "BASIC",
-#                 "NUM_BLOCKS": [4, 4, 4],
-#                 "FUSE_METHOD": "SUM",
-#                 "NUM_MODULES": 4,
-#                 "NUM_BRANCHES": 3,
-#             },
-#             "STAGE4": {
-#                 "NUM_CHANNELS": [18, 36, 72, 144],
-#                 "BLOCK": "BASIC",
-#                 "NUM_BLOCKS": [4, 4, 4, 4],
-#                 "FUSE_METHOD": "SUM",
-#                 "NUM_MODULES": 3,
-#                 "NUM_BRANCHES": 4,
-#             }
-#         }
-#     )
-#     model.eval()
-#     image = torch.randn(2, 3, 384, 384)
-#     image_temp = torch.randn(2, 3, 288, 288)
-#     with torch.no_grad():
-#         output = model.forward({"image" :image})
-#     a = tuple(output.shape)
-#     print(a)
