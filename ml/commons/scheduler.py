@@ -189,5 +189,5 @@ class PolyLrDecay(_LRScheduler):
 # for i in range(0, 200):
 #     print("{} : {}".format(i + 1, 1e-4 * 0.90 ** i))
 
-# for i in range(0, 120):
-#     print("{} : {}".format(i + 1, 1e-04 * (1 - i / 120) ** 0.90))
+# for i in range(0, 20):
+#     print("{} : {}".format(i + 1, 1e-04 * (1 - i / 20) ** 0.90))

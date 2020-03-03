@@ -11,5 +11,5 @@ class BiLinearUpSampling(nn.Module):
 
     def forward(self, x):
         return F.interpolate(
-            x, scale_factor=self.down_factor, mode="bilinear", align_corners=True
+            x, scale_factor=self.down_factor, mode="bilinear", align_corners=False
         )

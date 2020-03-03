@@ -1,27 +1,71 @@
 model:
-  BuildingBoundaryRefineNetExtractor:
-    backbone_to_use: resnet34
-    top_layers_trainable: True
-    classes: 2
-    pre_trained_image_net: True
-    final_mode: bilinear
+  BinaryDenseMultiFusion:
+    pre_trained_pascal: /home/palnak/Downloads/hrnetv2_w18_imagenet_pretrained.pth
+    STAGE1:
+      NUM_CHANNELS: 64
+      BLOCK: BOTTLENECK
+      NUM_BLOCKS: 4
+      FUSE_METHOD: SUM
+      NUM_MODULES: 1
+      NUM_BRANCHES: 1
+    STAGE2:
+      NUM_CHANNELS:
+        - 18
+        - 36
+      BLOCK: BASIC
+      NUM_BLOCKS:
+        - 4
+        - 4
+      FUSE_METHOD: SUM
+      NUM_MODULES: 1
+      NUM_BRANCHES: 2
+
+    STAGE3:
+      NUM_CHANNELS:
+        - 18
+        - 36
+        - 72
+      BLOCK: BASIC
+      NUM_BLOCKS:
+        - 4
+        - 4
+        - 4
+      FUSE_METHOD: SUM
+      NUM_MODULES: 4
+      NUM_BRANCHES: 3
+    STAGE4:
+      NUM_CHANNELS:
+        - 18
+        - 36
+        - 72
+        - 144
+      BLOCK: BASIC
+      NUM_BLOCKS:
+        - 4
+        - 4
+        - 4
+        - 4
+      FUSE_METHOD: SUM
+      NUM_MODULES: 3
+      NUM_BRANCHES: 4
 
 
 loss:
-  BuildingBoundarySigmoidLoss:
-    building_weight: 1
-    boundary_weight: 1
+  Jaccard:
+    jaccard_weight: 0.3
+
+#loss:
+#  DiceLoss:
+#    dice_weight: 1
 
 scheduler :
   PolyLrDecay:
     decay_after_epoch: 1
     power: 0.9
-    max_epochs: 20
+    max_epochs: 150
+
+#scheduler :
 
 optimizer:
-  SGD:
-    momentum: 0
-    dampening: 0
-    weight_decay: 0
-    nesterov: False
+  Adam:
     lr: 0.0001

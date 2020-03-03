@@ -23,8 +23,15 @@ def adjust_model_keys(state):
 
 
 def get_current_state(weight_path):
-    state = torch.load(str(weight_path))
+    state = torch.load(str(weight_path), map_location="cpu")
     return state
+
+
+def set_model_state(model, state):
+    if state is not None:
+        model_cuda = adjust_model_keys(state)
+        model.load_state_dict(model_cuda)
+    return model
 
 
 def load_parallel_model(model):
@@ -34,7 +41,7 @@ def load_parallel_model(model):
             device_ids = list(map(int, device_ids.split(",")))
         else:
             device_ids = None
-        model = torch.nn.DataParallel(model, device_ids=device_ids).cuda()
+        model = torch.nn.DataParallel(model, device_ids=device_ids)
         return model
     else:
         return model

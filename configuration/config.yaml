@@ -1,13 +1,12 @@
 root : /home/palnak/Dataset/scratch_inria
-experiment_name : testbob1
-transfer_weights_path :
-training_state: DEFAULT
-problem_type : building_boundary
+experiment_name : INRIA_HIGH_RESO
+problem_type : binary
 
 initial_assignment:
-  model_input_dimension: [256, 256]
-  n_epochs: 20
-  batch_size: 2
+  model_input_dimension: [384, 384]
+  n_epochs: 150
+  batch_size: 4
+
 
 transformation :
   DualCompose:
@@ -15,8 +14,14 @@ transformation :
       to_perform:
         - HorizontalFlip
         - VerticalFlip
+        - Rotate
+        - MirrorCrop
+        - RescaleCrop
         - RandomFilter
+        - RandomBrightness
+        - RandomContrast
+        - CLAHE
       transform_type: OneOf
       augment_prob: 0.5
 
-normalization : DivideBy255
+normalization : Normalize

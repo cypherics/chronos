@@ -5,6 +5,8 @@ import os
 import functools
 import logging
 
+from utils.date_time_utility import get_date
+
 
 def extract_function_name():
     """Extracts failing function name from Traceback
@@ -19,40 +21,43 @@ def extract_function_name():
 
 
 def create_logger(folder_path, exp_name):
-    logger = logging.getLogger('PyTrainer-log')
+    logger = logging.getLogger("PyTrainer-log")
     logger.setLevel(logging.DEBUG)
     log_path = os.path.join(folder_path, exp_name + ".log")
 
     ch = logging.StreamHandler()
     ch.setLevel(logging.DEBUG)
 
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    log_format = " \033[1;37m>>\033[0m \033[93m[%(asctime)s][%(name)s][%(levelname)s] \033[0;37m-\033[0m %(message)s"
+    formatter = logging.Formatter(log_format)
 
     ch.setFormatter(formatter)
     logger.addHandler(ch)
 
     fl = logging.FileHandler(log_path)
     fl.setLevel(logging.DEBUG)
-    fl_format = logging.Formatter(
-        "%(asctime)s %(name)s - %(levelname)s - %(message)s"
-    )
+    fl_format = logging.Formatter("%(asctime)s %(name)s : %(levelname)s : "
+                                  "filename - %(filename)s : "
+                                  "line no - %(lineno)s : "
+                                  "function name - %(funcName)s()"
+                                  ": %(message)s")
     fl.setFormatter(fl_format)
     logger.addHandler(fl)
-    logger.info("Experiment : {}".format(exp_name))
+    logger.info("Experiment {} conducted on : {}".format(exp_name, get_date()))
     sys.stdout.write = logger.info
 
 
 class LogDecorator(object):
     def __init__(self):
-        self.logger = logging.getLogger('PyTrainer-log')
+        self.logger = logging.getLogger("PyTrainer-log")
 
     def __call__(self, fn):
         @functools.wraps(fn)
-        def decorated(*args, **kwargs):
+        def log_decorated(*args, **kwargs):
             try:
-                self.logger.debug("{0}".format(fn.__name__))
+                self.logger.debug("{}".format(fn.__name__).upper())
                 result = fn(*args, **kwargs)
-                self.logger.debug(result)
+                # self.logger.debug(result)
                 return result
             except Exception as ex:
                 msg = "Function {function_name} raised {exception_class} ({exception_docstring}): {exception_message}".format(
@@ -64,5 +69,5 @@ class LogDecorator(object):
 
                 self.logger.exception("Exception {0}".format(msg))
                 raise ex
-        return decorated
 
+        return log_decorated
