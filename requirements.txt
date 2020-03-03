@@ -1,0 +1,9 @@
+PyYAML == 5.2
+fire == 0.2.1
+imgaug == 0.2.9
+opencv_python == 3.4.3.18
+pyjavaproperties == 0.7
+scikit_learn == 0.20.2
+scipy == 1.1.0
+torch == 1.2.0
+tqdm == 4.24.0

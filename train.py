@@ -16,32 +16,25 @@ def main(config):
     trainer.training()
 
 
-def default(config, parameter):
-    config = TrainConfig.create_config(config, parameter)
+def default(config_path, parameter_path):
+    config = TrainConfig.create_config(config_path, parameter_path)
     config.set_property("training_state", "DEFAULT")
     config.set_additional_configuration()
 
-    save_path = os.path.join(
-        os.path.join(
-            config.training_path, config.version
-        ),
-        "configuration.yaml",
-    )
+    save_path = os.path.join(config.training_path, config.version)
+
     config.write_config(save_path)
     create_logger(config.root_folder, config.experiment_name)
     main(config)
 
 
-def resume(resume_configurations):
-    config = TrainConfig.create_config(resume_configurations)
+def resume(resume_config_path, param_path=None):
+    config = TrainConfig.create_config(resume_config_path, param_path)
+    config.set_run_property(os.path.dirname(resume_config_path))
     config.update_property("training_state", "RESUME")
-    config.set_additional_configuration()
-    save_path = os.path.join(
-        os.path.join(
-            config.training_path, config.version
-        ),
-        "configuration.yaml",
-    )
+
+    save_path = os.path.join(config.training_path, config.version)
+
     config.write_config(save_path)
     create_logger(config.root_folder, config.experiment_name)
     main(config)
