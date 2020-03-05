@@ -96,10 +96,7 @@ class BaseEvaluator(metaclass=ABCMeta):
         shutil.rmtree(save_path)
         os.makedirs(save_path)
 
-        save_image_path = os.path.join(
-            save_path,
-            "{}_{}.png".format(epoch, iteration),
-        )
+        save_image_path = os.path.join(save_path, "{}_{}.png".format(epoch, iteration))
         misc.imsave(save_image_path, img)
 
     @staticmethod

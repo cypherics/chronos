@@ -36,11 +36,7 @@ def create_logger(folder_path, exp_name):
 
     fl = logging.FileHandler(log_path)
     fl.setLevel(logging.DEBUG)
-    fl_format = logging.Formatter("%(asctime)s %(name)s : %(levelname)s : "
-                                  "filename - %(filename)s : "
-                                  "line no - %(lineno)s : "
-                                  "function name - %(funcName)s()"
-                                  ": %(message)s")
+    fl_format = logging.Formatter("%(asctime)s %(name)s : %(levelname)s : %(message)s")
     fl.setFormatter(fl_format)
     logger.addHandler(fl)
     logger.info("Experiment {} conducted on : {}".format(exp_name, get_date()))

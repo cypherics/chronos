@@ -33,8 +33,11 @@ class Trainer:
     @LogDecorator()
     def training(self):
         model = self.plugin.model
-        train_loader, val_loader, test_loader = (self.plugin.train_data_loader,
-                                                 self.plugin.val_data_loader, self.plugin.test_data_loader)
+        train_loader, val_loader, test_loader = (
+            self.plugin.train_data_loader,
+            self.plugin.val_data_loader,
+            self.plugin.test_data_loader,
+        )
 
         criterion = self.plugin.criterion
         evaluator = self.plugin.evaluator
@@ -42,8 +45,8 @@ class Trainer:
         optimizer = self.loader.load_optimizer(model)
         scheduler = self.loader.load_lr_scheduler(optimizer)
 
-        model, optimizer, starting_epoch, step, learning_rate = (
-            self.loader.load_state(model, optimizer, self.config.training_state)
+        model, optimizer, starting_epoch, step, learning_rate = self.loader.load_state(
+            model, optimizer, self.config.training_state
         )
         self.start_session()
         report_each = 100
@@ -52,10 +55,7 @@ class Trainer:
 
         batch_size = self.config.batch_size
         epochs = self.config.n_epochs
-        for ongoing_epoch in range(
-            starting_epoch,
-            epochs,
-        ):
+        for ongoing_epoch in range(starting_epoch, epochs):
             model.train()
             random.seed()
 
@@ -92,15 +92,17 @@ class Trainer:
                     step += 1
                     if i and i % 20 == 0:
                         save_path = os.path.join(
-                            self.config.training_path,
-                            self.config.version,
+                            self.config.training_path, self.config.version
                         )
-                        predicted_images = evaluator.perform_test(
-                            model,
-                            test_loader
+                        predicted_images = evaluator.perform_test(model, test_loader)
+                        evaluator.save_inference_output(
+                            predicted_images, save_path, i, ongoing_epoch
                         )
-                        evaluator.save_inference_output(predicted_images, save_path, i, ongoing_epoch)
-                        self.data_viz.plt_images(to_tensor(np.moveaxis(predicted_images, -1, 0)), ongoing_epoch, "Test")
+                        self.data_viz.plt_images(
+                            to_tensor(np.moveaxis(predicted_images, -1, 0)),
+                            ongoing_epoch,
+                            "Test",
+                        )
 
                 #
                 self.data_viz.plt_scalar(lr, ongoing_epoch, "LR/Epoch")
@@ -121,8 +123,11 @@ class Trainer:
 
                 # self.early_stopping.step(valid_loss)
 
-                self.data_viz.plt_scalar({"train_loss": mean_loss.item(), "val_loss": valid_loss}, ongoing_epoch,
-                                         "Loss/Epoch")
+                self.data_viz.plt_scalar(
+                    {"train_loss": mean_loss.item(), "val_loss": valid_loss},
+                    ongoing_epoch,
+                    "Loss/Epoch",
+                )
 
                 if (previous_min_loss is None) or (valid_loss < previous_min_loss):
                     previous_min_loss = valid_loss
@@ -135,7 +140,9 @@ class Trainer:
                         lr=lr,
                         save_type="best",
                     )
-                    sys.stdout.write("BEST CHECKPOINT SAVED at Epoch: {}".format(ongoing_epoch))
+                    sys.stdout.write(
+                        "BEST CHECKPOINT SAVED at Epoch: {}".format(ongoing_epoch)
+                    )
 
                 self.save_check_point(
                     model=model,
@@ -144,7 +151,9 @@ class Trainer:
                     epoch=ongoing_epoch,
                     lr=lr,
                 )
-                sys.stdout.write("DEFAULT CHECKPOINT SAVED at Epoch: {}".format(ongoing_epoch))
+                sys.stdout.write(
+                    "DEFAULT CHECKPOINT SAVED at Epoch: {}".format(ongoing_epoch)
+                )
 
             except KeyboardInterrupt:
                 tq.close()
@@ -156,7 +165,9 @@ class Trainer:
                     epoch=ongoing_epoch,
                     lr=lr,
                 )
-                sys.stdout.write("KEYBOARD EXCEPTION CHECKPOINT SAVED : {}".format(ongoing_epoch))
+                sys.stdout.write(
+                    "KEYBOARD EXCEPTION CHECKPOINT SAVED : {}".format(ongoing_epoch)
+                )
 
                 raise KeyboardInterrupt
 

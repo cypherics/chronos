@@ -11,9 +11,11 @@ class BinaryFactory(Factory):
         super(BinaryFactory, self).__init__(config)
 
     def create_data_set(self):
-        return BinaryDataSet.get_train_data(self.config), \
-               BinaryDataSet.get_val_data(self.config), \
-               BinaryDataSet.get_test_data(self.config)
+        return (
+            BinaryDataSet.get_train_data(self.config),
+            BinaryDataSet.get_val_data(self.config),
+            BinaryDataSet.get_test_data(self.config),
+        )
 
     def create_evaluator(self):
         return BinaryEvaluator()

@@ -19,11 +19,7 @@ from utils.logger import LogDecorator
 
 
 class BaseDataSetPt(Dataset, metaclass=ABCMeta):
-    def __init__(
-        self,
-        config,
-        mode
-    ):
+    def __init__(self, config, mode):
         self.config = config
         root = self.config.root
         model_input_dim = self.config.model_input_dimension

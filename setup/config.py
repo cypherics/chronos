@@ -7,15 +7,37 @@ from pyjavaproperties import Properties
 
 
 class Config(object):
-    def __init__(self, conf):
+    def __init__(self, conf, config_restriction):
         self._config = conf
+        self.config_restriction = config_restriction
+        self._run_config = self.simplify_run_config()
         self._run_property = Properties()
+
+    def simplify_run_config(self):
+        conf = dict()
+        run_config = self.get_run_config()
+        for sec in run_config:
+            for key, value in run_config[sec].items():
+                conf[key] = value
+        return conf
+
+    def get_run_config(self):
+        conf = dict()
+        restricted_section = self.config_restriction
+        if restricted_section is not None:
+            for sec in self._config:
+                if sec in restricted_section:
+                    conf[sec] = self._config[sec]
+        else:
+            for sec in self._config:
+                conf[sec] = self._config[sec]
+        return conf
 
     def get_property(self, property_name):
         if property_name in self._run_property:
             return self._run_property[property_name]
-        elif property_name in self._config.keys():
-            return self._config[property_name]
+        elif property_name in self._run_config.keys():
+            return self._run_config[property_name]
         else:
             raise KeyError
 
@@ -25,28 +47,28 @@ class Config(object):
         self._run_property[property_name] = property_value
 
     def set_property(self, property_name, property_value):
-        if property_name not in self._config.keys():
+        if property_name not in self._run_config.keys():
             self._run_property[property_name] = property_value
 
     def get_sub_property(self, head_property, property_name):
-        if head_property not in self._config.keys():
+        if head_property not in self._run_config.keys():
             raise KeyError
-        return self.recursive_dict_fn(self._config, property_name)
+        return self.recursive_dict_fn(self._run_config[head_property], property_name)
 
     def recursive_dict_fn(self, recursive_dict, property_name, dict_value=None):
 
         for key, value in recursive_dict.items():
-            if isinstance(value, dict):
+            if key == property_name:
+                return value
+            elif isinstance(value, dict):
                 dict_value = self.recursive_dict_fn(value, property_name, dict_value)
-            else:
-                if key == property_name:
-                    return value
+
         return dict_value
 
     @staticmethod
     def folder_creation(exp_name_folder, model_name, folder_type="training"):
         root_folder = directory_handler.make_directory(
-            os.getcwd(), "run1/" + exp_name_folder
+            os.getcwd(), "run/" + exp_name_folder
         )
         model_folder_path = directory_handler.make_directory(root_folder, model_name)
         folder_type_path = directory_handler.make_directory(
@@ -74,7 +96,7 @@ class Config(object):
 
     def write_config(self, save_path):
         yaml_file_object = open(os.path.join(save_path, "configuration.yaml"), "w")
-        yaml.dump(self._config, yaml_file_object, default_flow_style=False)
+        yaml.dump(self.get_run_config(), yaml_file_object, default_flow_style=False)
         self._run_property.store(open(self.get_properties_file(save_path), "w"))
 
     @staticmethod
@@ -93,34 +115,18 @@ class Config(object):
 
         return current_version
 
-    @staticmethod
-    def generate_single_conf(config, parameter):
-        conf = dict()
-        parameter_config = dict()
-        for sec in config:
-            conf[sec] = config[sec]
-
-        for sec in parameter:
-            if parameter[sec] is None:
-                parameter_config[sec] = None
-            else:
-                for key, value in parameter[sec].items():
-                    parameter_config[sec] = key
-                    parameter_config[key] = value
-
-        training_configurations = {**conf, **parameter_config}
-        return training_configurations
-
     @classmethod
-    def create_config(cls, config_path, parameter_path=None):
-        conf = (
-            cls.read_config_yaml(config_path)
-            if parameter_path is None
-            else cls.generate_single_conf(
-                cls.read_config_yaml(config_path), cls.read_config_yaml(parameter_path)
-            )
-        )
-        return cls(conf)
+    def create_config(cls, config_path, config_restriction=None):
+        conf = cls.read_config_yaml(config_path)
+        return cls(conf, config_restriction)
 
     def set_run_property(self, path):
         self._run_property = self.read_properties_file(path)
+
+    @property
+    def config_restriction(self):
+        return self._config_section
+
+    @config_restriction.setter
+    def config_restriction(self, value):
+        self._config_section = value

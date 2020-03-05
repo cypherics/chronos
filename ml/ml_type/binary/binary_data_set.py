@@ -1,6 +1,9 @@
 import numpy as np
 
-from ml.commons.utils.torch_tensor_conversion import to_input_image_tensor, to_label_image_tensor
+from ml.commons.utils.torch_tensor_conversion import (
+    to_input_image_tensor,
+    to_label_image_tensor,
+)
 from ..base.base_data_set import BaseDataSetPt
 
 

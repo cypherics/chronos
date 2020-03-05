@@ -12,4 +12,3 @@ class BaseNetwork(nn.Module):
     @abstractmethod
     def forward_propagate(self, x):
         pass
-

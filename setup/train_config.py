@@ -5,82 +5,84 @@ from setup.config import Config
 
 
 class TrainConfig(Config):
-    def __init__(self, conf):
-        super().__init__(conf)
+    def __init__(self, conf, config_restriction):
+        super().__init__(conf, config_restriction)
 
     def create_weights_path(self):
-        version_path = directory_handler.make_directory(self.training_path, self.version)
+        version_path = directory_handler.make_directory(
+            self.training_path, self.version
+        )
         default_weights_path = os.path.join(version_path, "default_checkpoint.pt")
         best_weights_path = os.path.join(version_path, "best_checkpoint.pt")
         return default_weights_path, best_weights_path
 
     @property
     def transformation(self):
-        return self.get_property('transformation')
+        return self.get_property("TRANSFORMATION")
 
     @property
     def root(self):
-        return self.get_property('root')
+        return self.get_property("ROOT")
 
     @property
     def experiment_name(self):
-        return self.get_property('experiment_name')
+        return self.get_property("EXP_NAME")
 
     @property
     def problem_type(self):
-        return self.get_property('problem_type')
+        return self.get_property("ML_TYPE")
 
     @property
     def normalization(self):
-        return self.get_property('normalization')
+        return self.get_property("NORMALIZATION")
 
     @property
     def batch_size(self):
-        return self.get_sub_property('initial_assignment', "batch_size")
+        return self.get_property("BATCH")
 
     @property
     def n_epochs(self):
-        return self.get_sub_property('initial_assignment', "n_epochs")
+        return self.get_property("EPOCH")
 
     @property
     def model_input_dimension(self):
-        return self.get_sub_property('initial_assignment', "model_input_dimension")
+        return self.get_property("IMAGE_DIM")
 
     @property
     def model(self):
-        return self.get_property('model')
+        return self.get_property("MODEL_NAME")
 
     @property
     def model_param(self):
-        return self.get_property(self.get_property('model'))
+        return self.get_property("MODEL_PARAM")
 
     @property
     def loss(self):
-        return self.get_property('loss')
+        return self.get_sub_property("LOSS", "NAME")
 
     @property
     def loss_param(self):
-        return self.get_property(self.get_property('loss'))
+        return self.get_sub_property("LOSS", "PARAM")
 
     @property
     def scheduler(self):
-        return self.get_property('scheduler')
+        return self.get_sub_property("SCHEDULER", "NAME")
 
     @property
     def scheduler_param(self):
-        return self.get_property(self.get_property('scheduler'))
+        return self.get_sub_property("SCHEDULER", "PARAM")
 
     @property
     def optimizer(self):
-        return self.get_property('optimizer')
+        return self.get_sub_property("OPTIMIZER", "NAME")
 
     @property
     def optimizer_param(self):
-        return self.get_property(self.get_property('optimizer'))
+        return self.get_sub_property("OPTIMIZER", "PARAM")
 
     @property
     def training_state(self):
-        return self.get_property('training_state')
+        return self.get_property("training_state")
 
     @property
     def training_path(self):
@@ -122,8 +124,13 @@ class TrainConfig(Config):
     def best_chk_path(self, value):
         self.set_property("best_chk_path", value)
 
-    def set_additional_configuration(self):
-        self.root_folder, _, self.training_path = self.folder_creation(self.experiment_name, self.model)
-        self.version = (self.create_version(self.training_path) if self.training_state == "DEFAULT" else
-                        self.get_property('Version'))
+    def set_additional_property(self):
+        self.root_folder, _, self.training_path = self.folder_creation(
+            self.experiment_name, self.model
+        )
+        self.version = (
+            self.create_version(self.training_path)
+            if self.training_state == "DEFAULT"
+            else self.get_property("Version")
+        )
         self.chk_path, self.best_chk_path = self.create_weights_path()

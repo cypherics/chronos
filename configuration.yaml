@@ -1,5 +1,26 @@
-model:
-  BinaryDenseMultiFusion:
+DATASET:
+  ROOT : /home/palnak/Dataset/scratch_inria
+  EXP_NAME : INRIA_HIGH_RESO
+  NORMALIZATION : Normalize
+  TRANSFORMATION:
+    DualCompose:
+      transform_1:
+        to_perform:
+          - HorizontalFlip
+          - VerticalFlip
+          - Rotate
+          - MirrorCrop
+          - RescaleCrop
+          - RandomFilter
+          - RandomBrightness
+          - RandomContrast
+          - CLAHE
+        transform_type: OneOf
+        augment_prob: 0.5
+
+MODEL:
+  MODEL_NAME: BinaryDenseMultiFusion
+  MODEL_PARAM:
     pre_trained_pascal: /home/palnak/Downloads/hrnetv2_w18_imagenet_pretrained.pth
     STAGE1:
       NUM_CHANNELS: 64
@@ -50,22 +71,25 @@ model:
       NUM_BRANCHES: 4
 
 
-loss:
-  Jaccard:
-    jaccard_weight: 0.3
+TRAIN:
+  IMAGE_DIM: [384, 384]
+  EPOCH: 150
+  BATCH: 4
+  ML_TYPE : binary
 
-#loss:
-#  DiceLoss:
-#    dice_weight: 1
+  LOSS:
+    NAME: Jaccard
+    PARAM:
+      jaccard_weight: 0.3
 
-scheduler :
-  PolyLrDecay:
-    decay_after_epoch: 1
-    power: 0.9
-    max_epochs: 150
+  SCHEDULER:
+    NAME: PolyLrDecay
+    PARAM:
+      decay_after_epoch: 1
+      power: 0.9
+      max_epochs: 150
 
-#scheduler :
-
-optimizer:
-  Adam:
-    lr: 0.0001
+  OPTIMIZER:
+    NAME: Adam
+    PARAM:
+      lr: 0.0001
