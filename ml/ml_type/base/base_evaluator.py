@@ -6,9 +6,10 @@ from scipy import misc
 import torch
 
 from torch import nn
-from torchvision.utils import make_grid
 
-from utils.dictionary_set import set_key
+from ml.commons.metrics import compute_metric
+from ml.pt.logger import PtLogger
+from utils.dictionary_set import handle_dictionary
 from utils.directory_handler import make_directory
 from ml.commons.utils.torch_tensor_conversion import cuda_variable
 
@@ -16,17 +17,13 @@ from abc import ABCMeta, abstractmethod
 
 
 class BaseEvaluator(metaclass=ABCMeta):
-    @abstractmethod
-    def compute_metric(self, **kwargs) -> dict:
-        raise NotImplementedError
-
     @staticmethod
     def compute_mean_metric(metric: dict):
         mean_metric = dict()
         for key, value in metric.items():
             assert type(value) is list
             mean_value = np.mean(value)
-            mean_metric = set_key(mean_metric, key, mean_value)
+            mean_metric = handle_dictionary(mean_metric, key, mean_value)
         return mean_metric
 
     @torch.no_grad()
@@ -42,10 +39,10 @@ class BaseEvaluator(metaclass=ABCMeta):
             losses.append(loss.item())
 
             outputs = self.get_prediction_as_per_instance(outputs)
-            met = self.compute_metric(targets=targets, outputs=outputs)
+            met = compute_metric(ground_truth=targets, prediction=outputs)
             if met is not None:
                 for key, value in met.items():
-                    metric = set_key(metric, key, value)
+                    metric = handle_dictionary(metric, key, value)
 
         valid_loss = np.mean(losses)
         valid_loss = {"valid_loss": valid_loss}
@@ -67,8 +64,10 @@ class BaseEvaluator(metaclass=ABCMeta):
 
             return stack_img
 
+    @PtLogger(log_argument=True, log_result=True)
     def handle_prediction(self, prediction):
         prediction = self.get_prediction_as_per_instance(prediction)
+        prediction = self.classifier_activation(prediction)
         prediction = self.generate_image(prediction)
         return prediction
 
@@ -76,18 +75,13 @@ class BaseEvaluator(metaclass=ABCMeta):
     def generate_image(self, prediction):
         raise NotImplementedError
 
-    @staticmethod
-    def create_prediction_grid(inputs, prediction):
-        display_image = cuda_variable(inputs)
-        display_image = display_image["image"].cpu()
-        grid = make_grid(prediction, nrow=2, normalize=True)
-        nda = grid.mul(255).clamp(0, 255).byte().permute(1, 2, 0).cpu().numpy()
-        grid_sat = make_grid(display_image, nrow=2, normalize=True)
-        grid_sat_nda = (
-            grid_sat.mul(255).clamp(0, 255).byte().permute(1, 2, 0).cpu().numpy()
-        )
+    @abstractmethod
+    def classifier_activation(self, prediction):
+        raise NotImplementedError
 
-        return np.vstack((nda, grid_sat_nda))
+    @abstractmethod
+    def create_prediction_grid(self, inputs, prediction):
+        raise NotImplementedError
 
     @staticmethod
     def save_inference_output(img, save_path, iteration, epoch):

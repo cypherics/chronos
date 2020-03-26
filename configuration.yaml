@@ -1,25 +1,29 @@
 DATASET:
   ROOT : /home/palnak/Dataset/scratch_inria
-  EXP_NAME : INRIA_HIGH_RESO
+  EXP_NAME : INRIA_REFINE_LITE
   NORMALIZATION : Normalize
   TRANSFORMATION:
     DualCompose:
       transform_1:
+        augment_prob: 0.6
         to_perform:
           - HorizontalFlip
           - VerticalFlip
           - Rotate
-          - MirrorCrop
-          - RescaleCrop
           - RandomFilter
           - RandomBrightness
           - RandomContrast
           - CLAHE
         transform_type: OneOf
+      transform_2:
         augment_prob: 0.5
+        to_perform:
+          - MirrorCrop
+          - RescaleCrop
+        transform_type: OneOf
 
 MODEL:
-  MODEL_NAME: BinaryDenseMultiFusion
+  MODEL_NAME: BinaryRefineLite
   MODEL_PARAM:
     pre_trained_pascal: /home/palnak/Downloads/hrnetv2_w18_imagenet_pretrained.pth
     STAGE1:
@@ -73,8 +77,8 @@ MODEL:
 
 TRAIN:
   IMAGE_DIM: [384, 384]
-  EPOCH: 150
-  BATCH: 4
+  EPOCH: 200
+  BATCH: 6
   ML_TYPE : binary
 
   LOSS:
@@ -87,7 +91,7 @@ TRAIN:
     PARAM:
       decay_after_epoch: 1
       power: 0.9
-      max_epochs: 150
+      max_epochs: 200
 
   OPTIMIZER:
     NAME: Adam

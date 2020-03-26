@@ -1,67 +1,94 @@
 import random
 import sys
 import os
-import time
 
 import numpy as np
 import torch
 
 import tqdm
 
+from ml.commons.callbacks import (
+    CallbackList,
+    TensorBoardCallback,
+    TrainStateCallback,
+    SchedulerCallback,
+    TimeCallback,
+)
 from ml.commons.utils.torch_tensor_conversion import to_tensor
-from ml.commons.visualization import Visualization
 from ml.commons.utils import torch_tensor_conversion
-from utils import date_time_utility
-from utils.dictionary_set import dict_to_string
-from utils.logger import LogDecorator
+from ml.state.train import TrainState
+from utils.dictionary_set import dict_to_string, handle_dictionary
+from ml.pt.logger import PtLogger
+from ml.commons.scheduler import get_scheduler
 
 
-class Trainer:
-    def __init__(self, plugin, loader, config):
-        self.config = config
-        self.loader = loader
-        self.plugin = plugin
+class Trainer(TrainState):
+    def __init__(self):
+        super().__init__()
 
-        self.start_time = None
-        self.data_viz = None
+    @staticmethod
+    @PtLogger()
+    def load_optimizer(model, config):
+        optimizer_name = config.optimizer
+        optimizer_param = config.optimizer_param
+        return getattr(torch.optim, optimizer_name)(
+            filter(lambda p: p.requires_grad, model.parameters()), **optimizer_param
+        )
 
-    @LogDecorator()
-    def start_session(self):
-        self.start_time = time.time()
-        self.data_viz = self.initiate_data_viz()
+    @PtLogger()
+    def training(self, instance, config, training_callbacks=None):
+        self.model = instance.model
+        self.optimizer = self.load_optimizer(self.model, config)
 
-    @LogDecorator()
-    def training(self):
-        model = self.plugin.model
+        self.extract_state(config.chk_path)
         train_loader, val_loader, test_loader = (
-            self.plugin.train_data_loader,
-            self.plugin.val_data_loader,
-            self.plugin.test_data_loader,
+            instance.train_data_loader,
+            instance.val_data_loader,
+            instance.test_data_loader,
         )
 
-        criterion = self.plugin.criterion
-        evaluator = self.plugin.evaluator
+        criterion = instance.criterion
+        evaluator = instance.evaluator
 
-        optimizer = self.loader.load_optimizer(model)
-        scheduler = self.loader.load_lr_scheduler(optimizer)
-
-        model, optimizer, starting_epoch, step, learning_rate = self.loader.load_state(
-            model, optimizer, self.config.training_state
+        scheduler = get_scheduler(
+            config.scheduler,
+            **{**config.scheduler_param, **{"optimizer": self.optimizer}}
         )
-        self.start_session()
+
+        callbacks = (
+            CallbackList()
+            if training_callbacks is None
+            else CallbackList(training_callbacks)
+        )
+        callbacks.append(
+            TensorBoardCallback(os.path.join(config.training_path, config.version))
+        )
+        callbacks.append(TrainStateCallback(config.chk_path, config.best_chk_path))
+        callbacks.append(SchedulerCallback(scheduler))
+        callbacks.append(TimeCallback())
+
         report_each = 100
-        valid_losses = []
-        previous_min_loss = None
 
-        batch_size = self.config.batch_size
-        epochs = self.config.n_epochs
-        for ongoing_epoch in range(starting_epoch, epochs):
-            model.train()
+        batch_size = config.batch_size
+        epochs = config.n_epochs
+        start_epoch = self.starting_epoch
+
+        callbacks.on_begin()
+
+        for ongoing_epoch in range(start_epoch, epochs):
+            epoch_logs = dict()
             random.seed()
 
+            self.starting_epoch = ongoing_epoch
+            self.model.train()
+
             tq = tqdm.tqdm(total=(len(train_loader) * batch_size))
-            lr = optimizer.param_groups[0]["lr"]
-            tq.set_description("Epoch {}, lr {}".format(ongoing_epoch + 1, lr))
+            lr = self.optimizer.param_groups[0]["lr"]
+            epoch_logs = handle_dictionary(
+                epoch_logs, "plt_lr", {"data": lr, "tag": "LR/Epoch"}
+            )
+
+            tq.set_description("Epoch {}, lr {}".format(self.starting_epoch, lr))
             losses = []
 
             tl = train_loader
@@ -69,143 +96,85 @@ class Trainer:
             try:
                 mean_loss = 0
                 for i, input_data in enumerate(tl):
-
-                    if not model.training:
-                        model.train()
+                    batch_logs = dict()
+                    callbacks.on_batch_begin(self.step, logs=batch_logs)
+                    if not self.model.training:
+                        self.model.train()
 
                     input_data = torch_tensor_conversion.cuda_variable(input_data)
 
-                    outputs = model(input_data)
+                    outputs = self.model(input_data)
                     calculated_loss = criterion(outputs=outputs, **input_data)
-                    optimizer.zero_grad()
-                    # batch_size = inputs.size(0)
+                    self.optimizer.zero_grad()
                     calculated_loss.backward()
-                    optimizer.step()
+                    self.optimizer.step()
 
                     tq.update(batch_size)
                     losses.append(calculated_loss.item())
-                    mean_loss = np.mean(
-                        losses[-report_each:]
-                    )  # understand pythonic interpretation of this line
+                    mean_loss = np.mean(losses[-report_each:])
                     tq.set_postfix(loss="{:.5f}".format(mean_loss))
-                    self.data_viz.plt_scalar(mean_loss.item(), step, "Loss/Step")
-                    step += 1
+                    batch_logs = handle_dictionary(
+                        batch_logs, "plt_lr", {"data": mean_loss, "tag": "Loss/Step"}
+                    )
                     if i and i % 20 == 0:
-                        save_path = os.path.join(
-                            self.config.training_path, self.config.version
+                        save_path = os.path.join(config.training_path, config.version)
+                        predicted_images = evaluator.perform_test(
+                            self.model, test_loader
                         )
-                        predicted_images = evaluator.perform_test(model, test_loader)
                         evaluator.save_inference_output(
                             predicted_images, save_path, i, ongoing_epoch
                         )
-                        self.data_viz.plt_images(
-                            to_tensor(np.moveaxis(predicted_images, -1, 0)),
-                            ongoing_epoch,
-                            "Test",
+                        batch_logs = handle_dictionary(
+                            batch_logs,
+                            "plt_img",
+                            {
+                                "img": to_tensor(np.moveaxis(predicted_images, -1, 0)),
+                                "tag": "Test",
+                            },
                         )
-
-                #
-                self.data_viz.plt_scalar(lr, ongoing_epoch, "LR/Epoch")
-
+                    callbacks.on_batch_end(self.step, logs=batch_logs)
+                    self.step += 1
                 tq.close()
 
                 valid_metrics = evaluator.perform_validation(
-                    model=model, loss_function=criterion, valid_loader=val_loader
+                    model=self.model, loss_function=criterion, valid_loader=val_loader
                 )
                 valid_loss = valid_metrics["valid_loss"]
-                valid_losses.append(valid_loss)
-
-                if scheduler is not None:
-                    scheduler.step(epoch=ongoing_epoch + 1, valid_loss=valid_loss)
+                epoch_logs = handle_dictionary(epoch_logs, "valid_loss", valid_loss)
 
                 metric_str = dict_to_string(valid_metrics)
                 sys.stdout.write("METRIC: {}".format(metric_str))
 
-                # self.early_stopping.step(valid_loss)
-
-                self.data_viz.plt_scalar(
-                    {"train_loss": mean_loss.item(), "val_loss": valid_loss},
-                    ongoing_epoch,
-                    "Loss/Epoch",
+                epoch_logs = handle_dictionary(
+                    epoch_logs,
+                    "plt_loss",
+                    {
+                        "data": {
+                            "train_loss": mean_loss.item(),
+                            "val_loss": valid_loss,
+                        },
+                        "tag": "Loss/Epoch",
+                    },
                 )
 
-                if (previous_min_loss is None) or (valid_loss < previous_min_loss):
-                    previous_min_loss = valid_loss
+                if (self.bst_vld_loss is None) or (valid_loss < self.bst_vld_loss):
+                    self.bst_vld_loss = valid_loss
 
-                    self.save_check_point(
-                        model=model,
-                        optimizer=optimizer,
-                        step=step,
-                        epoch=ongoing_epoch,
-                        lr=lr,
-                        save_type="best",
-                    )
-                    sys.stdout.write(
-                        "BEST CHECKPOINT SAVED at Epoch: {}".format(ongoing_epoch)
-                    )
-
-                self.save_check_point(
-                    model=model,
-                    optimizer=optimizer,
-                    step=step,
-                    epoch=ongoing_epoch,
-                    lr=lr,
-                )
-                sys.stdout.write(
-                    "DEFAULT CHECKPOINT SAVED at Epoch: {}".format(ongoing_epoch)
+                callbacks.on_epoch_end(
+                    self.starting_epoch, logs={**epoch_logs, **self.state_obj}
                 )
 
             except KeyboardInterrupt:
                 tq.close()
-                self.close_session()
-                self.save_check_point(
-                    model=model,
-                    optimizer=optimizer,
-                    step=step,
-                    epoch=ongoing_epoch,
-                    lr=lr,
-                )
+                callbacks.interruption(logs={**epoch_logs, **self.state_obj})
                 sys.stdout.write(
                     "KEYBOARD EXCEPTION CHECKPOINT SAVED : {}".format(ongoing_epoch)
                 )
-
                 raise KeyboardInterrupt
 
             except Exception as ex:
                 tq.close()
-                self.close_session()
                 raise ex
 
-        self.close_session()
         sys.stdout.write("Training Complete")
-
-    @LogDecorator()
-    def initiate_data_viz(self):
-        log_dir = os.path.join(self.config.training_path, self.config.version)
-        data_viz = Visualization(log_dir)
-        return data_viz
-
-    @LogDecorator()
-    def close_session(self):
-        end_time = time.time()
-        total_time = date_time_utility.get_time(end_time - self.start_time)
-        sys.stdout.write("Run Time : {}".format(total_time))
-
-    def best(self):
-        return self.config.best_chk_path
-
-    def default(self):
-        return self.config.chk_path
-
-    def save_check_point(self, model, optimizer, epoch, step, lr, save_type="default"):
-        func = getattr(self, save_type)
-        torch.save(
-            {
-                "model": model.state_dict(),
-                "optimizer": optimizer.state_dict(),
-                "starting_epoch": epoch,
-                "step": step,
-                "lr": lr,
-            },
-            str(func()),
-        )
+        callbacks.on_end()

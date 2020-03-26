@@ -1,7 +1,7 @@
 import os
 from utils import directory_handler
 
-from setup.config import Config
+from config.config import Config
 
 
 class TrainConfig(Config):

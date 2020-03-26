@@ -1,23 +1,28 @@
-from ml.commons.metrics import iou, precision, recall, f_score
+import numpy as np
+from torchvision.utils import make_grid
+
 from ..base.base_evaluator import BaseEvaluator
+from ...commons.utils.torch_tensor_conversion import cuda_variable
 
 
 class BinaryEvaluator(BaseEvaluator):
-    def compute_metric(self, targets, outputs):
-        jaccard = iou(targets, (outputs > 0).float()).item()
-        precision_metric = precision(targets, (outputs > 0).float()).item()
-        recall_metric = recall(targets, (outputs > 0).float()).item()
-        f_score_metric = f_score(targets, (outputs > 0).float()).item()
-        return {
-            "Jaccard": jaccard,
-            "Precision": precision_metric,
-            "Recall": recall_metric,
-            "F_Score": f_score_metric,
-        }
+    def create_prediction_grid(self, inputs, prediction):
+        display_image = cuda_variable(inputs)
+        display_image = display_image["image"].cpu()
+        grid = make_grid(prediction, nrow=2, normalize=True)
+        nda = grid.mul(255).clamp(0, 255).byte().permute(1, 2, 0).cpu().numpy()
+        grid_sat = make_grid(display_image, nrow=2, normalize=True)
+        grid_sat_nda = (
+            grid_sat.mul(255).clamp(0, 255).byte().permute(1, 2, 0).cpu().numpy()
+        )
 
-    def get_accuracy(self, true_values, predicted_values):
-        raise NotImplementedError
+        return np.vstack((nda, grid_sat_nda))
+
+    def classifier_activation(self, prediction):
+        prediction = prediction.sigmoid()
+        return prediction
 
     def generate_image(self, prediction):
-        prediction = prediction.sigmoid()
+        prediction[prediction >= 0.40] = 1
+        prediction[prediction < 0.40] = 0
         return prediction

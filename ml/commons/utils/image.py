@@ -3,12 +3,15 @@ import cv2
 
 from scipy import misc
 
+from ml.pt.logger import PtLogger
+
 
 def load_image(path: str):
     img = misc.imread(path)
     return img
 
 
+@PtLogger(log_argument=True, log_result=True)
 def crop_image(img: np.ndarray, model_input_dimension: tuple, random_crop_coord: tuple):
     model_height, model_width = model_input_dimension
     height, width = random_crop_coord
@@ -18,6 +21,7 @@ def crop_image(img: np.ndarray, model_input_dimension: tuple, random_crop_coord:
     return img
 
 
+@PtLogger(log_argument=True, log_result=True)
 def get_random_crop_x_and_y(model_input_dimension: tuple, image_input_dimension: tuple):
     model_height, model_width = model_input_dimension
     image_height, image_width, _ = image_input_dimension
@@ -27,6 +31,7 @@ def get_random_crop_x_and_y(model_input_dimension: tuple, image_input_dimension:
     return h_start, w_start
 
 
+@PtLogger(log_argument=True, log_result=True)
 def get_pad_limit(model_input_dimension: tuple, image_input_dimension: tuple):
     model_height, model_width = model_input_dimension
     image_height, image_width, _ = image_input_dimension
@@ -35,6 +40,7 @@ def get_pad_limit(model_input_dimension: tuple, image_input_dimension: tuple):
     return limit
 
 
+@PtLogger(log_argument=True, log_result=True)
 def pad_image(img: np.ndarray, limit: int):
     img = cv2.copyMakeBorder(
         img, limit, limit, limit, limit, borderType=cv2.BORDER_REFLECT_101
@@ -42,6 +48,7 @@ def pad_image(img: np.ndarray, limit: int):
     return img
 
 
+@PtLogger(log_argument=True, log_result=True)
 def perform_scale(img, dimension, interpolation=cv2.INTER_NEAREST):
     new_height, new_width = dimension
     img = cv2.resize(img, (new_width, new_height), interpolation=interpolation)

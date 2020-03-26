@@ -15,7 +15,7 @@ from ml.commons import augmentation, normalizer
 
 from abc import ABCMeta, abstractmethod
 
-from utils.logger import LogDecorator
+from ml.pt.logger import PtLogger
 
 
 class BaseDataSetPt(Dataset, metaclass=ABCMeta):
@@ -103,18 +103,17 @@ class BaseDataSetPt(Dataset, metaclass=ABCMeta):
         else:
             raise NotImplementedError
 
-    @LogDecorator()
+    @PtLogger()
     def load_transformation(self, transformation_param):
         transform_type = list(transformation_param.keys())[0]
         transformation_to_perform = list(transformation_param.values())[0]
         number_of_transformation = len(list(transformation_param.values())[0])
 
         transformation_to_applied = list()
-        for i in range(number_of_transformation):
-            for _, transform_param in transformation_to_perform.items():
-                transformation_to_applied.append(
-                    self._get_train_transformation(**transform_param)
-                )
+        for _, transform_param in transformation_to_perform.items():
+            transformation_to_applied.append(
+                self._get_train_transformation(**transform_param)
+            )
         if number_of_transformation == 1:
             transformation = transformation_to_applied[0]
         else:
@@ -135,7 +134,7 @@ class BaseDataSetPt(Dataset, metaclass=ABCMeta):
         return train_transformation
 
     @staticmethod
-    @LogDecorator()
+    @PtLogger()
     def load_normalization(normalization_name):
         normalization = getattr(normalizer, normalization_name)()
         return normalization
@@ -158,10 +157,12 @@ class BaseDataSetPt(Dataset, metaclass=ABCMeta):
         else:
             return img, mask
 
+    @PtLogger(log_argument=True, log_result=True)
     def perform_normalization(self, img):
         img = self.normalization(img)
         return img
 
+    @PtLogger(log_argument=True, log_result=True)
     def perform_transformation(self, img, mask):
         if self.mode == "train":
             img, mask = self.transform(img, mask)

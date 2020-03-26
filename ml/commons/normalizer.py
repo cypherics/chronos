@@ -2,7 +2,10 @@ import numpy as np
 
 from sklearn.preprocessing import MinMaxScaler
 
+from ml.pt.logger import PtLogger
 
+
+@PtLogger(log_argument=True, log_result=True)
 class Normalize:
     def __init__(self, mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)):
         self.mean = mean
@@ -18,6 +21,7 @@ class Normalize:
         return img
 
 
+@PtLogger(log_argument=True, log_result=True)
 class MinMax:
     def __init__(self):
         self.normalization = "minmax"
@@ -36,6 +40,7 @@ class MinMax:
         return out.astype(np.float32)
 
 
+@PtLogger(log_argument=True, log_result=True)
 class MinMaxImageNet:
     def __init__(self):
         self.normalization = "minmax"
@@ -54,6 +59,7 @@ class MinMaxImageNet:
         return out.astype(np.float32)
 
 
+@PtLogger(log_argument=True, log_result=True)
 class MinMaxScaleImageNet:
     def __init__(self):
         self.normalization = "minmax"
@@ -69,6 +75,7 @@ class MinMaxScaleImageNet:
         return img.astype(np.float32)
 
 
+@PtLogger(log_argument=True, log_result=True)
 class DivideBy255:
     def __init__(self):
         self.normalization = "divide_by_255"

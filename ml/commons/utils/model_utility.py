@@ -1,9 +1,9 @@
 import torch
 
-from utils.logger import LogDecorator
+from ml.pt.logger import PtLogger
 
 
-@LogDecorator()
+@PtLogger(log_argument=True, log_result=True)
 def get_gpu_device_ids():
     device_id = list()
     separator = ","
@@ -14,32 +14,27 @@ def get_gpu_device_ids():
     return device_id
 
 
-def adjust_model_keys(state):
-    # WhenEver a model is trained on multi gpu using DataParallel, module keyword is added
-    model = {
-        ([".".join(key.split(".")[1:])][0] if "module" in key.split(".")[0] else key): (
-            value
-        )
-        for key, value in state["model"].items()
-    }
-    return model
-
-
-@LogDecorator()
+@PtLogger()
 def get_current_state(weight_path):
     state = torch.load(str(weight_path), map_location="cpu")
     return state
 
 
-@LogDecorator()
+@PtLogger()
 def set_model_state(model, state):
     if state is not None:
-        model_cuda = adjust_model_keys(state)
+        model_cuda = adjust_model(state)
         model.load_state_dict(model_cuda)
     return model
 
 
-@LogDecorator()
+@PtLogger()
+def set_optimizer_state(optimizer, state):
+    optimizer.load_state_dict(state)
+    return optimizer
+
+
+@PtLogger()
 def load_parallel_model(model):
     if torch.cuda.is_available():
         device_ids = get_gpu_device_ids()
@@ -51,3 +46,15 @@ def load_parallel_model(model):
         return model
     else:
         return model
+
+
+@PtLogger(log_argument=True, log_result=True)
+def adjust_model(state):
+    # WhenEver a model is trained on multi gpu using DataParallel, module keyword is added
+    model = {
+        ([".".join(key.split(".")[1:])][0] if "module" in key.split(".")[0] else key): (
+            value
+        )
+        for key, value in state.items()
+    }
+    return model
