@@ -1,6 +1,6 @@
 import fire
 
-from instance.training import Training
+from job.training import Training
 
 
 class Init(object):
