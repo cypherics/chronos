@@ -141,7 +141,7 @@ class Trainer(TrainState):
                 valid_loss = valid_metrics["valid_loss"]
                 epoch_logs = handle_dictionary(epoch_logs, "valid_loss", valid_loss)
 
-                metric_str = dict_to_string({**{"train_loss": "{:.5f}".format(mean_loss)}, **valid_metrics})
+                metric_str = dict_to_string({**{"train_loss": mean_loss}, **valid_metrics})
                 SystemPrinter.sys_print("METRIC: {}".format(metric_str))
                 epoch_logs = handle_dictionary(
                     epoch_logs,
