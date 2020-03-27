@@ -122,7 +122,7 @@ class TrainStateCallback(Callback):
 class TensorBoardCallback(Callback):
     def __init__(self, log_dir):
         super().__init__()
-        self.writer = SummaryWriter(log_dir)
+        self.writer = SummaryWriter(make_directory(log_dir, "events"))
 
     def plt_scalar(self, y, x, tag):
         if type(y) is dict:
