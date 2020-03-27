@@ -14,7 +14,7 @@ from imgaug import augmenters as iaa
 from ml.pt.logger import PtLogger
 
 
-@PtLogger(log_argument=True, log_result=True)
+@PtLogger(debug=True)
 class DualCompose:
     # sab transfrom lagayega
     def __init__(self, transforms, prob=None):
@@ -27,7 +27,7 @@ class DualCompose:
         return x, mask
 
 
-@PtLogger(log_argument=True, log_result=True)
+@PtLogger(debug=True)
 class OneOf:
     # jitne diye usme se koi ek
     def __init__(self, transforms, prob=0.5):
@@ -42,7 +42,7 @@ class OneOf:
         return x, mask
 
 
-@PtLogger(log_argument=True, log_result=True)
+@PtLogger(debug=True)
 class OneOrOther:
     # donno me se koi ek
     def __init__(self, first, second, prob=0.5):
@@ -60,7 +60,7 @@ class OneOrOther:
         return x, mask
 
 
-@PtLogger(log_argument=True, log_result=True)
+@PtLogger(debug=True)
 class ImageOnly:
     def __init__(self, trans):
         self.trans = trans
@@ -69,7 +69,7 @@ class ImageOnly:
         return self.trans(x), mask
 
 
-@PtLogger(log_argument=True, log_result=True)
+@PtLogger(debug=True)
 class MirrorCrop:
     def __init__(self, prob=0.5):
         self.prob = prob
@@ -91,7 +91,7 @@ class MirrorCrop:
         return img, mask
 
 
-@PtLogger(log_argument=True, log_result=True)
+@PtLogger(debug=True)
 class RescaleCrop:
     def __init__(self, prob=0.5):
         self.prob = prob
@@ -107,7 +107,7 @@ class RescaleCrop:
         return img, mask
 
 
-@PtLogger(log_argument=True, log_result=True)
+@PtLogger(debug=True)
 class VerticalFlip:
     def __init__(self, prob=0.5):
         self.prob = prob
@@ -120,7 +120,7 @@ class VerticalFlip:
         return img, mask
 
 
-@PtLogger(log_argument=True, log_result=True)
+@PtLogger(debug=True)
 class HorizontalFlip:
     def __init__(self, prob=0.5):
         self.prob = prob
@@ -133,7 +133,7 @@ class HorizontalFlip:
         return img, mask
 
 
-@PtLogger(log_argument=True, log_result=True)
+@PtLogger(debug=True)
 class RandomFlip:
     def __init__(self, prob=0.5):
         self.prob = prob
@@ -147,7 +147,7 @@ class RandomFlip:
         return img, mask
 
 
-@PtLogger(log_argument=True, log_result=True)
+@PtLogger(debug=True)
 class Transpose:
     def __init__(self, prob=0.5):
         self.prob = prob
@@ -160,7 +160,7 @@ class Transpose:
         return img, mask
 
 
-@PtLogger(log_argument=True, log_result=True)
+@PtLogger(debug=True)
 class RandomRotate90:
     def __init__(self, prob=0.5):
         self.prob = prob
@@ -174,7 +174,7 @@ class RandomRotate90:
         return img.copy(), mask.copy()
 
 
-@PtLogger(log_argument=True, log_result=True)
+@PtLogger(debug=True)
 class Rotate:
     def __init__(self, limit=90, prob=0.5):
         self.prob = prob
@@ -205,7 +205,7 @@ class Rotate:
         return img, mask
 
 
-@PtLogger(log_argument=True, log_result=True)
+@PtLogger(debug=True)
 class RandomCrop:
     def __init__(self, size):
         self.h = size[0]
@@ -228,7 +228,7 @@ class RandomCrop:
         return img, mask
 
 
-@PtLogger(log_argument=True, log_result=True)
+@PtLogger(debug=True)
 class Shift:
     def __init__(self, limit=4, prob=0.5):
         self.limit = limit
@@ -269,7 +269,7 @@ class Shift:
         return img, mask
 
 
-@PtLogger(log_argument=True, log_result=True)
+@PtLogger(debug=True)
 class ShiftScale:
     def __init__(self, limit=4, prob=0.25):
         self.limit = limit
@@ -322,7 +322,7 @@ class ShiftScale:
         return img, mask
 
 
-@PtLogger(log_argument=True, log_result=True)
+@PtLogger(debug=True)
 class ShiftScaleRotate:
     def __init__(self, shift_limit=0.0625, scale_limit=0.1, rotate_limit=45, prob=0.5):
         self.shift_limit = shift_limit
@@ -371,7 +371,7 @@ class ShiftScaleRotate:
         return img, mask
 
 
-@PtLogger(log_argument=True, log_result=True)
+@PtLogger(debug=True)
 class CenterCrop:
     def __init__(self, size):
         self.height = size[0]
@@ -394,7 +394,7 @@ class CenterCrop:
         return img, mask
 
 
-@PtLogger(log_argument=True, log_result=True)
+@PtLogger(debug=True)
 class Distort1:
     """"
     ## unconverntional augmnet ################################################################################3
@@ -458,7 +458,7 @@ class Distort1:
         return img, mask
 
 
-@PtLogger(log_argument=True, log_result=True)
+@PtLogger(debug=True)
 class Distort2:
     """
     #http://pythology.blogspot.sg/2014/03/interpolation-on-regular-distorted-grid.html
@@ -534,7 +534,7 @@ def clip(img, dtype, maxval):
     return np.clip(img, 0, maxval).astype(dtype)
 
 
-@PtLogger(log_argument=True, log_result=True)
+@PtLogger(debug=True)
 class RandomFilter:
     """
     blur sharpen, etc
@@ -565,7 +565,7 @@ class RandomFilter:
 # from mxnet code, see: https://github.com/dmlc/mxnet/blob/master/python/mxnet/image.py
 
 
-@PtLogger(log_argument=True, log_result=True)
+@PtLogger(debug=True)
 class RandomBrightness:
     def __init__(self, limit=0.1, prob=0.5):
         self.limit = limit
@@ -581,7 +581,7 @@ class RandomBrightness:
         return img, mask
 
 
-@PtLogger(log_argument=True, log_result=True)
+@PtLogger(debug=True)
 class RandomContrast:
     def __init__(self, limit=0.1, prob=0.5):
         self.limit = limit
@@ -602,7 +602,7 @@ class RandomContrast:
         return img, mask
 
 
-@PtLogger(log_argument=True, log_result=True)
+@PtLogger(debug=True)
 class RandomSaturation:
     def __init__(self, limit=0.3, prob=0.5):
         self.limit = limit
@@ -621,7 +621,7 @@ class RandomSaturation:
         return img, mask
 
 
-@PtLogger(log_argument=True, log_result=True)
+@PtLogger(debug=True)
 class RandomHueSaturationValue:
     def __init__(
         self,
@@ -656,7 +656,7 @@ class RandomHueSaturationValue:
         return image, mask
 
 
-@PtLogger(log_argument=True, log_result=True)
+@PtLogger(debug=True)
 class GaussianNoise:
     def __init__(self, prob=0.5):
         self.prob = prob
@@ -669,7 +669,7 @@ class GaussianNoise:
         return image, mask
 
 
-@PtLogger(log_argument=True, log_result=True)
+@PtLogger(debug=True)
 class PerspectiveTransform:
     def __init__(self, prob=0.5, scale=(0.01, 0.1)):
         self.scale = scale
@@ -686,7 +686,7 @@ class PerspectiveTransform:
         return image, mask
 
 
-@PtLogger(log_argument=True, log_result=True)
+@PtLogger(debug=True)
 class CLAHE:
     def __init__(self, prob=0.5, clipLimit=2.0, tileGridSize=(8, 8)):
         self.clipLimit = clipLimit
@@ -706,7 +706,7 @@ class CLAHE:
         return im, mask
 
 
-@PtLogger(log_argument=True, log_result=True)
+@PtLogger(debug=True)
 def get_random_crop_x_and_y(model_input_dimension: tuple, image_input_dimension: tuple):
     model_height, model_width = model_input_dimension
     image_height, image_width, _ = image_input_dimension
@@ -716,7 +716,7 @@ def get_random_crop_x_and_y(model_input_dimension: tuple, image_input_dimension:
     return h_start, w_start
 
 
-@PtLogger(log_argument=True, log_result=True)
+@PtLogger(debug=True)
 def crop_image(img: np.ndarray, model_input_dimension: tuple, random_crop_coord: tuple):
     model_height, model_width = model_input_dimension
     height, width = random_crop_coord
@@ -726,7 +726,7 @@ def crop_image(img: np.ndarray, model_input_dimension: tuple, random_crop_coord:
     return img
 
 
-@PtLogger(log_argument=True, log_result=True)
+@PtLogger(debug=True)
 def perform_scale(img, label, dimension, interpolation=cv2.INTER_LINEAR):
     new_height, new_width = dimension
     img = cv2.resize(img, (new_width, new_height), interpolation=interpolation)

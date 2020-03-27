@@ -3,7 +3,7 @@ import torch
 from ml.pt.logger import PtLogger
 
 
-@PtLogger(log_argument=True, log_result=True)
+@PtLogger(debug=True)
 def get_gpu_device_ids():
     device_id = list()
     separator = ","
@@ -48,7 +48,7 @@ def load_parallel_model(model):
         return model
 
 
-@PtLogger(log_argument=True, log_result=True)
+@PtLogger(debug=True)
 def adjust_model(state):
     # WhenEver a model is trained on multi gpu using DataParallel, module keyword is added
     model = {

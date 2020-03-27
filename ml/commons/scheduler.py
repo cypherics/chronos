@@ -33,7 +33,7 @@ class PolyLrDecay(_LRScheduler):
                 param_group["lr"] = lr
 
 
-@PtLogger(log_argument=True, log_result=True)
+@PtLogger(debug=True)
 def get_scheduler(scheduler: str, **kwargs):
     if hasattr(lr_scheduler, scheduler):
         return getattr(lr_scheduler, scheduler)(**kwargs)
@@ -41,7 +41,7 @@ def get_scheduler(scheduler: str, **kwargs):
         return str_to_class(scheduler)(**kwargs)
 
 
-@PtLogger(log_argument=True, log_result=True)
+@PtLogger(debug=True)
 def str_to_class(class_name: str):
     class_obj = getattr(sys.modules[__name__], class_name)
     return class_obj

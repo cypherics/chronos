@@ -5,6 +5,7 @@ from ml.commons.utils.model_utility import (
     set_optimizer_state,
     load_parallel_model,
 )
+from ml.pt.logger import PtLogger
 
 
 class TrainState(object):
@@ -60,6 +61,7 @@ class TrainState(object):
     def state_obj(self):
         return {"my_state": self.compress_state_obj()}
 
+    @PtLogger(debug=True)
     def compress_state_obj(self):
         return {
             "model": self.model.state_dict(),
@@ -69,6 +71,7 @@ class TrainState(object):
             "bst_vld_loss": self.bst_vld_loss,
         }
 
+    @PtLogger(debug=True)
     def extract_state(self, pth):
         if os.path.exists(pth):
             ongoing_state = get_current_state(pth)

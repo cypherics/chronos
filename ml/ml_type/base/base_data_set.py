@@ -157,12 +157,12 @@ class BaseDataSetPt(Dataset, metaclass=ABCMeta):
         else:
             return img, mask
 
-    @PtLogger(log_argument=True, log_result=True)
+    @PtLogger(debug=True)
     def perform_normalization(self, img):
         img = self.normalization(img)
         return img
 
-    @PtLogger(log_argument=True, log_result=True)
+    @PtLogger(debug=True)
     def perform_transformation(self, img, mask):
         if self.mode == "train":
             img, mask = self.transform(img, mask)

@@ -15,7 +15,7 @@ from utils.system_printer import SystemPrinter
 
 class BaseEvaluator(metaclass=ABCMeta):
     @staticmethod
-    @PtLogger(log_argument=True, log_result=True)
+    @PtLogger(debug=True)
     def compute_mean_metric(metric: dict):
         mean_metric = dict()
         for key, value in metric.items():
@@ -67,7 +67,7 @@ class BaseEvaluator(metaclass=ABCMeta):
 
             return stack_img
 
-    @PtLogger(log_argument=True, log_result=True)
+    @PtLogger(debug=True)
     def handle_prediction(self, prediction):
         prediction = self.get_prediction_as_per_instance(prediction)
         prediction = self.classifier_activation(prediction)

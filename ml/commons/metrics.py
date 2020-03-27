@@ -20,14 +20,14 @@ def get_numpy(ip):
         return ip
 
 
-@PtLogger(log_argument=True, log_result=True)
+@PtLogger(debug=True)
 def to_binary(prediction, cutoff=0.40):
     prediction[prediction >= cutoff] = 1
     prediction[prediction < cutoff] = 0
     return prediction
 
 
-@PtLogger(log_argument=True, log_result=True)
+@PtLogger(debug=True)
 def confusion_matrix_elements(mat):
     tp = mat[0][0]
     fp = mat[0][1]
@@ -36,7 +36,7 @@ def confusion_matrix_elements(mat):
     return tp, fp, fn, tn
 
 
-@PtLogger(log_argument=True, log_result=True)
+@PtLogger(debug=True)
 def compute_metric(prediction, ground_truth):
     prediction = get_numpy(prediction).flatten()
     ground_truth = get_numpy(ground_truth).flatten()
@@ -55,31 +55,31 @@ def compute_metric(prediction, ground_truth):
     return metrics
 
 
-@PtLogger(log_argument=True, log_result=True)
+@PtLogger(debug=True)
 def accuracy(tp, fp, fn, tn):
     num = tp + tn
     den = tp + tn + fp + fn
     return num / den
 
 
-@PtLogger(log_argument=True, log_result=True)
+@PtLogger(debug=True)
 def f1_score(tp, fp, fn, tn):
     num = 2 * tp
     den = (2 * tp) + fp + fn
     return num / den
 
 
-@PtLogger(log_argument=True, log_result=True)
+@PtLogger(debug=True)
 def precision(tp, fp, fn, tn):
     return tp / (tp + fp)
 
 
-@PtLogger(log_argument=True, log_result=True)
+@PtLogger(debug=True)
 def recall(tp, fp, fn, tn):
     return tp / (tp + fn)
 
 
-@PtLogger(log_argument=True, log_result=True)
+@PtLogger(debug=True)
 def iou(tp, fp, fn, tn):
     denominator = tp + fp + fn
     if denominator == 0:

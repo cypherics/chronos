@@ -126,11 +126,16 @@ class DenseNet(nn.Module):
 
         num_features = num_init_features + growth_rate * bottleneck_layers
         for j, num_layers in enumerate(decoder_block_config):
+            # print("trans In: {}".format(num_features))
+
             trans = _TransitionUp(num_features, compression_ratio)
             self.decoder.add_module("decodertransition%d" % (j + 1), trans)
 
             trans_out_feature = int(num_features * compression_ratio)
+            # print("trans Out: {}".format(trans_out_feature))
             cur_channels_count = trans_out_feature + skip_connection_channel_counts[j]
+            # print("Dense In: {}".format(cur_channels_count))
+
             block = _DenseBlock(
                 num_layers=num_layers,
                 num_input_features=cur_channels_count,

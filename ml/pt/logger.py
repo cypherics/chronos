@@ -51,23 +51,22 @@ def create_logger(folder_path, exp_name):
 
 
 class PtLogger(object):
-    def __init__(self, log_argument=False, log_result=False):
+    def __init__(self, debug=False):
         self.logger = logging.getLogger("PyTrainer-log")
-        self.log_argument = log_argument
-        self.log_result = log_result
+        self.debug = debug
 
     def __call__(self, fn):
         @functools.wraps(fn)
         def log_decorated(*args, **kwargs):
             try:
-                if self.log_argument:
+                if self.debug:
                     self.logger.debug(
                         "{0} - {1} - {2}".format(fn.__name__, args, kwargs)
                     )
                 else:
                     self.logger.info("{}".format(fn.__name__).upper())
                 result = fn(*args, **kwargs)
-                if self.log_result:
+                if self.debug:
                     self.logger.debug("{0} - {1}".format(fn.__name__, result))
                 return result
             except KeyboardInterrupt as ex:

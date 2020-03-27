@@ -97,7 +97,7 @@ class Callback(object):
         pass
 
 
-@PtLogger(log_argument=True, log_result=True)
+@PtLogger(debug=True)
 class TrainStateCallback(Callback):
     def __init__(self, save_path, best_save_path):
         super().__init__()
@@ -119,7 +119,6 @@ class TrainStateCallback(Callback):
         torch.save(my_state, str(self.chk))
 
 
-@PtLogger(log_argument=True, log_result=True)
 class TensorBoardCallback(Callback):
     def __init__(self, log_dir):
         super().__init__()
@@ -154,7 +153,6 @@ class TensorBoardCallback(Callback):
         self.plt_scalar(data["data"], batch, data["tag"])
 
 
-@PtLogger(log_argument=True, log_result=True)
 class SchedulerCallback(Callback):
     def __init__(self, scheduler):
         super().__init__()
@@ -164,7 +162,6 @@ class SchedulerCallback(Callback):
         self.scheduler.step(epoch)
 
 
-@PtLogger(log_argument=True, log_result=True)
 class TimeCallback(Callback):
     def __init__(self):
         super().__init__()
@@ -184,7 +181,6 @@ class TimeCallback(Callback):
         SystemPrinter.sys_print("Run Time : {}".format(total_time))
 
 
-@PtLogger(log_argument=True, log_result=True)
 class PredictionSaveCallback(Callback):
     def __init__(self, pth):
         super().__init__()
