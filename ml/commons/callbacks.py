@@ -1,22 +1,21 @@
 import os
-import sys
+import shutil
 
 import torch
 import warnings
 import time
 
+import numpy as np
+import cv2
+from ml.commons.utils.torch_tensor_conversion import to_tensor
 from ml.pt.logger import PtLogger
 from utils import date_time_utility
+from utils.directory_handler import make_directory
+from utils.system_printer import SystemPrinter
 
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore")
     from torch.utils.tensorboard import SummaryWriter
-
-from ml.commons.utils.model_utility import (
-    get_current_state,
-    set_model_state,
-    set_optimizer_state,
-)
 
 
 class CallbackList(object):
@@ -149,7 +148,9 @@ class TensorBoardCallback(Callback):
         data = logs["plt_lr"]
 
         if img_data is not None:
-            self.plt_images(img_data["img"], batch, img_data["tag"])
+            # self.plt_images(to_tensor(np.moveaxis(img_data["img"], -1, 0)), batch, img_data["tag"])
+            pass
+
         self.plt_scalar(data["data"], batch, data["tag"])
 
 
@@ -175,9 +176,28 @@ class TimeCallback(Callback):
     def on_end(self, logs=None):
         end_time = time.time()
         total_time = date_time_utility.get_time(end_time - self.start_time)
-        sys.stdout.write("Run Time : {}".format(total_time))
+        SystemPrinter.sys_print("Run Time : {}".format(total_time))
 
     def interruption(self, logs=None):
         end_time = time.time()
         total_time = date_time_utility.get_time(end_time - self.start_time)
-        sys.stdout.write("Run Time : {}".format(total_time))
+        SystemPrinter.sys_print("Run Time : {}".format(total_time))
+
+
+@PtLogger(log_argument=True, log_result=True)
+class PredictionSaveCallback(Callback):
+    def __init__(self, pth):
+        super().__init__()
+        self.save_path = pth
+
+    def on_batch_end(self, batch, logs=None):
+        img_data = logs["plt_img"] if "plt_img" in logs else None
+
+        if img_data is not None:
+            save_path = make_directory(self.save_path, "test_prediction")
+
+            shutil.rmtree(save_path)
+            os.makedirs(save_path)
+
+            save_image_path = os.path.join(save_path, "{}.png".format(batch))
+            cv2.imwrite(save_image_path, img_data["img"])

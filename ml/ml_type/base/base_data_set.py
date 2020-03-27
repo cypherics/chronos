@@ -1,3 +1,4 @@
+import cv2
 import numpy as np
 from pathlib import Path
 
@@ -9,7 +10,6 @@ from ml.commons.utils.image import (
     pad_image,
     get_random_crop_x_and_y,
     crop_image,
-    load_image,
 )
 from ml.commons import augmentation, normalizer
 
@@ -168,14 +168,18 @@ class BaseDataSetPt(Dataset, metaclass=ABCMeta):
             img, mask = self.transform(img, mask)
         return img, mask
 
-    @staticmethod
-    def read_data(idx, data_list):
+    def read_data(self, idx, data_list):
         if len(data_list) != 0:
             image_file_name = data_list[idx]
-            image = load_image(str(image_file_name))
+            image = self.load_image(str(image_file_name))
             return image, image_file_name
         else:
             return None, None
+
+    @staticmethod
+    def load_image(path: str):
+        img = cv2.imread(path)
+        return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
     @abstractmethod
     def perform_image_operation_train_and_val(self, **kwargs) -> dict:

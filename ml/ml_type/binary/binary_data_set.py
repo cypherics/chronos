@@ -1,3 +1,4 @@
+import cv2
 import numpy as np
 
 from ml.commons.utils.torch_tensor_conversion import (
@@ -31,5 +32,6 @@ class BinaryDataSet(BaseDataSetPt):
 
     @staticmethod
     def get_label_normalization(mask) -> np.ndarray:
+        mask = cv2.cvtColor(mask, cv2.COLOR_RGB2GRAY)
         normalized_mask = mask / 255
         return normalized_mask

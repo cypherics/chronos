@@ -1,14 +1,7 @@
 import numpy as np
 import cv2
 
-from scipy import misc
-
 from ml.pt.logger import PtLogger
-
-
-def load_image(path: str):
-    img = misc.imread(path)
-    return img
 
 
 @PtLogger(log_argument=True, log_result=True)

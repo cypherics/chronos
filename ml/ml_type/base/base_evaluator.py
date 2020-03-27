@@ -1,8 +1,4 @@
-import os
-import shutil
-
 import numpy as np
-from scipy import misc
 import torch
 
 from torch import nn
@@ -10,14 +6,16 @@ from torch import nn
 from ml.commons.metrics import compute_metric
 from ml.pt.logger import PtLogger
 from utils.dictionary_set import handle_dictionary
-from utils.directory_handler import make_directory
 from ml.commons.utils.torch_tensor_conversion import cuda_variable
 
 from abc import ABCMeta, abstractmethod
 
+from utils.system_printer import SystemPrinter
+
 
 class BaseEvaluator(metaclass=ABCMeta):
     @staticmethod
+    @PtLogger(log_argument=True, log_result=True)
     def compute_mean_metric(metric: dict):
         mean_metric = dict()
         for key, value in metric.items():
@@ -31,7 +29,12 @@ class BaseEvaluator(metaclass=ABCMeta):
         model.eval()
         losses = []
         metric = dict()
+        ongoing_count = 1
+        total_count = len(valid_loader)
         for input_data in valid_loader:
+            SystemPrinter.dynamic_print(tag=str("Validation"), data="{}/{}".format(ongoing_count, total_count))
+
+            ongoing_count += 1
             input_data = cuda_variable(input_data)
 
             targets = input_data["label"]
@@ -82,16 +85,6 @@ class BaseEvaluator(metaclass=ABCMeta):
     @abstractmethod
     def create_prediction_grid(self, inputs, prediction):
         raise NotImplementedError
-
-    @staticmethod
-    def save_inference_output(img, save_path, iteration, epoch):
-        save_path = make_directory(save_path, "test_prediction")
-
-        shutil.rmtree(save_path)
-        os.makedirs(save_path)
-
-        save_image_path = os.path.join(save_path, "{}_{}.png".format(epoch, iteration))
-        misc.imsave(save_image_path, img)
 
     @staticmethod
     def get_valid_loss(model: nn.Module, loss_function, **input_data):

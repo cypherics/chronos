@@ -13,6 +13,7 @@ from ml.commons.callbacks import (
     TrainStateCallback,
     SchedulerCallback,
     TimeCallback,
+    PredictionSaveCallback,
 )
 from ml.commons.utils.torch_tensor_conversion import to_tensor
 from ml.commons.utils import torch_tensor_conversion
@@ -20,6 +21,7 @@ from ml.state.train import TrainState
 from utils.dictionary_set import dict_to_string, handle_dictionary
 from ml.pt.logger import PtLogger
 from ml.commons.scheduler import get_scheduler
+from utils.system_printer import SystemPrinter
 
 
 class Trainer(TrainState):
@@ -66,6 +68,9 @@ class Trainer(TrainState):
         callbacks.append(TrainStateCallback(config.chk_path, config.best_chk_path))
         callbacks.append(SchedulerCallback(scheduler))
         callbacks.append(TimeCallback())
+        callbacks.append(
+            PredictionSaveCallback(os.path.join(config.training_path, config.version))
+        )
 
         report_each = 100
 
@@ -117,20 +122,14 @@ class Trainer(TrainState):
                         batch_logs, "plt_lr", {"data": mean_loss, "tag": "Loss/Step"}
                     )
                     if i and i % 20 == 0:
-                        save_path = os.path.join(config.training_path, config.version)
                         predicted_images = evaluator.perform_test(
                             self.model, test_loader
                         )
-                        evaluator.save_inference_output(
-                            predicted_images, save_path, i, ongoing_epoch
-                        )
+
                         batch_logs = handle_dictionary(
                             batch_logs,
                             "plt_img",
-                            {
-                                "img": to_tensor(np.moveaxis(predicted_images, -1, 0)),
-                                "tag": "Test",
-                            },
+                            {"img": predicted_images, "tag": "Test"},
                         )
                     callbacks.on_batch_end(self.step, logs=batch_logs)
                     self.step += 1
@@ -142,9 +141,8 @@ class Trainer(TrainState):
                 valid_loss = valid_metrics["valid_loss"]
                 epoch_logs = handle_dictionary(epoch_logs, "valid_loss", valid_loss)
 
-                metric_str = dict_to_string(valid_metrics)
-                sys.stdout.write("METRIC: {}".format(metric_str))
-
+                metric_str = dict_to_string({**{"train_loss": "{:.5f}".format(mean_loss)}, **valid_metrics})
+                SystemPrinter.sys_print("METRIC: {}".format(metric_str))
                 epoch_logs = handle_dictionary(
                     epoch_logs,
                     "plt_loss",
@@ -167,7 +165,7 @@ class Trainer(TrainState):
             except KeyboardInterrupt:
                 tq.close()
                 callbacks.interruption(logs={**epoch_logs, **self.state_obj})
-                sys.stdout.write(
+                SystemPrinter.sys_print(
                     "KEYBOARD EXCEPTION CHECKPOINT SAVED : {}".format(ongoing_epoch)
                 )
                 raise KeyboardInterrupt
@@ -176,5 +174,5 @@ class Trainer(TrainState):
                 tq.close()
                 raise ex
 
-        sys.stdout.write("Training Complete")
+        SystemPrinter.sys_print("Training Complete")
         callbacks.on_end()

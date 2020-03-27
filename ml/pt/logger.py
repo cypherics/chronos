@@ -4,6 +4,7 @@ import traceback
 import os
 import functools
 import logging
+from logging.handlers import RotatingFileHandler
 
 from utils.date_time_utility import get_date
 
@@ -33,13 +34,20 @@ def create_logger(folder_path, exp_name):
     logger.addHandler(ch)
 
     fl = logging.FileHandler(log_path)
-    fl.setLevel(logging.DEBUG)
+    fl.setLevel(logging.INFO)
     fl_format = logging.Formatter("%(asctime)s %(name)s : %(levelname)s : %(message)s")
     fl.setFormatter(fl_format)
     logger.addHandler(fl)
+
+    rfl = RotatingFileHandler(os.path.join(folder_path, exp_name + "_extensive.log"), maxBytes=1024)
+    rfl.setLevel(logging.DEBUG)
+    rfl_format = logging.Formatter("%(asctime)s %(name)s : %(levelname)s : %(message)s")
+    rfl.setFormatter(rfl_format)
+    logger.addHandler(rfl)
+
     logger.info("Experiment {} conducted on : {}".format(exp_name, get_date()))
 
-    sys.stdout.write = logger.info
+    sys.stdout.writelines = logger.info
 
 
 class PtLogger(object):
