@@ -2,7 +2,7 @@ import numpy as np
 from torchvision.utils import make_grid
 
 from ..base.base_evaluator import BaseEvaluator
-from ...commons.utils.torch_tensor_conversion import cuda_variable
+from ...commons.utils.tensor_util import cuda_variable
 
 
 class BinaryEvaluator(BaseEvaluator):

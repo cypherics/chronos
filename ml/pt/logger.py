@@ -1,12 +1,13 @@
 import sys
 import traceback
-
+import numpy as np
 import os
 import functools
 import logging
 from logging.handlers import RotatingFileHandler
 
 from utils.date_time_utility import get_date
+from utils.dictionary_set import handle_dictionary
 
 
 def extract_function_name():
@@ -39,7 +40,9 @@ def create_logger(folder_path, exp_name):
     fl.setFormatter(fl_format)
     logger.addHandler(fl)
 
-    rfl = RotatingFileHandler(os.path.join(folder_path, exp_name + "_extensive.log"), maxBytes=1024)
+    rfl = RotatingFileHandler(
+        os.path.join(folder_path, exp_name + "_extensive.log"), maxBytes=1024
+    )
     rfl.setLevel(logging.DEBUG)
     rfl_format = logging.Formatter("%(asctime)s %(name)s : %(levelname)s : %(message)s")
     rfl.setFormatter(rfl_format)
@@ -48,6 +51,23 @@ def create_logger(folder_path, exp_name):
     logger.info("Experiment {} conducted on : {}".format(exp_name, get_date()))
 
     sys.stdout.writelines = logger.info
+
+
+def remove_nd_array(*args, **kwargs):
+    new_arg = list()
+    new_kwargs = dict()
+    for individual_argument in args:
+        if type(individual_argument) == np.ndarray:
+            new_arg.append("nd array")
+        else:
+            new_arg.append(individual_argument)
+
+    for key, value in kwargs.items():
+        if type(value) == np.ndarray:
+            new_kwargs = handle_dictionary(new_kwargs, key, "nd array")
+        else:
+            new_kwargs = handle_dictionary(new_kwargs, key, value)
+    return tuple(new_arg), new_kwargs
 
 
 class PtLogger(object):
@@ -59,15 +79,25 @@ class PtLogger(object):
         @functools.wraps(fn)
         def log_decorated(*args, **kwargs):
             try:
+                new_args, new_kwargs = remove_nd_array(*args, **kwargs)
                 if self.debug:
                     self.logger.debug(
-                        "{0} - {1} - {2}".format(fn.__name__, args, kwargs)
+                        "{0} - {1} - {2} - {3}".format(
+                            "Input to", fn.__name__, new_args, new_kwargs
+                        )
                     )
                 else:
                     self.logger.info("{}".format(fn.__name__).upper())
                 result = fn(*args, **kwargs)
                 if self.debug:
-                    self.logger.debug("{0} - {1}".format(fn.__name__, result))
+                    new_args, _ = (
+                        remove_nd_array(*result)
+                        if type(result) == tuple
+                        else remove_nd_array(*[result])
+                    )
+                    self.logger.debug(
+                        "{0} - {1} - {2}".format("Output of", fn.__name__, new_args)
+                    )
                 return result
             except KeyboardInterrupt as ex:
                 msg = "Function {function_name} raised {exception_class} ({exception_docstring}): {exception_message}".format(
@@ -76,7 +106,7 @@ class PtLogger(object):
                     exception_docstring=ex.__doc__,
                     exception_message=ex,
                 )
-
+                self.logger.debug("{0} - {1} - {2}".format(fn.__name__, args, kwargs))
                 self.logger.exception("Exception {0}".format(msg))
                 raise ex
             except Exception as ex:
@@ -86,7 +116,7 @@ class PtLogger(object):
                     exception_docstring=ex.__doc__,
                     exception_message=ex,
                 )
-
+                self.logger.debug("{0} - {1} - {2}".format(fn.__name__, args, kwargs))
                 self.logger.exception("Exception {0}".format(msg))
                 raise ex
 

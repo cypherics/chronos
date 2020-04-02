@@ -1,14 +1,14 @@
 import os
 
-from ml.pt.factory import Plugin
-from ml.trainer import Trainer
+from ml.pt.factory import PtPlugin
+from ml.pt.runner import PtRunner
 from config.train_config import TrainConfig
 from ml.pt.logger import create_logger, PtLogger
 
 CONFIG_RESTRICTION = ["DATASET", "MODEL", "TRAIN"]
 
 
-class Training:
+class Train:
     def __init__(self, config_path):
         self.config_path = config_path
         self._train_data_loader, self._val_data_loader, self._test_data_loader = (
@@ -68,36 +68,19 @@ class Training:
     def test_data_loader(self, value):
         self._test_data_loader = value
 
-    def default(self):
-        config = TrainConfig.create_config(self.config_path, CONFIG_RESTRICTION)
-        config.set_property("training_state", "DEFAULT")
-        config.set_additional_property()
-
+    def run(self):
+        config = TrainConfig(self.config_path, CONFIG_RESTRICTION)
         save_path = os.path.join(config.training_path, config.version)
 
         config.write_config(save_path)
         create_logger(config.root_folder, config.experiment_name)
-        plugin = Plugin(config)
-        self.load_trainer_plugin(plugin, config)
-        trainer = Trainer()
-        trainer.training(self, config)
-
-    def resume(self):
-        config = TrainConfig.create_config(self.config_path, CONFIG_RESTRICTION)
-        config.set_run_property(os.path.dirname(self.config_path))
-        config.update_property("training_state", "RESUME")
-
-        save_path = os.path.join(config.training_path, config.version)
-
-        config.write_config(save_path)
-        create_logger(config.root_folder, config.experiment_name)
-        plugin = Plugin(config)
-        self.load_trainer_plugin(plugin, config)
-        trainer = Trainer()
-        trainer.training(self, config)
+        plugin = PtPlugin(config)
+        self.load_plugin(plugin, config)
+        runner = PtRunner()
+        runner.training(self, config)
 
     @PtLogger()
-    def load_trainer_plugin(self, plugin, config):
+    def load_plugin(self, plugin, config):
         self.model = plugin.factory.create_network(config.model, config.model_param)
         self.criterion = plugin.factory.create_criterion(config.loss, config.loss_param)
 

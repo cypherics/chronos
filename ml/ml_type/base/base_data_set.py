@@ -5,7 +5,7 @@ from pathlib import Path
 import torch
 from torch.utils.data import Dataset, DataLoader
 
-from ml.commons.utils.image import (
+from ml.commons.utils.image_util import (
     get_pad_limit,
     pad_image,
     get_random_crop_x_and_y,

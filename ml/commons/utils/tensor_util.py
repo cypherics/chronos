@@ -53,3 +53,10 @@ def prediction_tensor_cuda(data):
     data = add_extra_dimension(data)
     data = cuda_variable(data)
     return data
+
+
+def convert_tensor_to_numpy(ip):
+    if ip.is_cuda:
+        return ip.data.cpu().numpy()
+    else:
+        return ip.data.numpy()

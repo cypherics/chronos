@@ -2,16 +2,31 @@ import os
 
 import yaml
 
-from utils import directory_handler
 from pyjavaproperties import Properties
 
 
-class Config(object):
-    def __init__(self, conf, config_restriction):
-        self._config = conf
-        self.config_restriction = config_restriction
+class PtConfig(object):
+    def __init__(self, config_path, restriction):
+        self._config = self.read_config_yaml(config_path)
+        self._config_section = restriction
         self._run_config = self.simplify_run_config()
-        self._run_property = Properties()
+        self._additional_config = Properties()
+
+    @property
+    def config_restriction(self):
+        return self._config_section
+
+    @config_restriction.setter
+    def config_restriction(self, value):
+        self._config_section = value
+
+    @property
+    def additional_config(self):
+        return self._additional_config
+
+    @additional_config.setter
+    def additional_config(self, value: Properties):
+        self._additional_config = value
 
     def simplify_run_config(self):
         conf = dict()
@@ -34,21 +49,16 @@ class Config(object):
         return conf
 
     def get_property(self, property_name):
-        if property_name in self._run_property:
-            return self._run_property[property_name]
-        elif property_name in self._run_config.keys():
+        if property_name in self._run_config.keys():
             return self._run_config[property_name]
         else:
             raise KeyError
 
-    def update_property(self, property_name, property_value):
-        if property_name not in self._run_property:
+    def get_additional_property(self, property_name):
+        if property_name in self.additional_config:
+            return self.additional_config[property_name]
+        else:
             raise KeyError
-        self._run_property[property_name] = property_value
-
-    def set_property(self, property_name, property_value):
-        if property_name not in self._run_config.keys():
-            self._run_property[property_name] = property_value
 
     def get_sub_property(self, head_property, property_name):
         if head_property not in self._run_config.keys():
@@ -66,18 +76,6 @@ class Config(object):
         return dict_value
 
     @staticmethod
-    def folder_creation(exp_name_folder, model_name, folder_type="training"):
-        root_folder = directory_handler.make_directory(
-            os.getcwd(), "run/" + exp_name_folder
-        )
-        model_folder_path = directory_handler.make_directory(root_folder, model_name)
-        folder_type_path = directory_handler.make_directory(
-            model_folder_path, folder_type
-        )
-
-        return root_folder, model_folder_path, folder_type_path
-
-    @staticmethod
     def read_config_yaml(file_path: str) -> dict:
         with open(file_path, "r") as reader:
             config = yaml.load(reader)
@@ -86,7 +84,7 @@ class Config(object):
     @staticmethod
     def read_properties_file(config_path):
         prop = Properties()
-        prop.load(open(Config.get_properties_file(config_path)))
+        prop.load(open(PtConfig.get_properties_file(config_path)))
         return prop
 
     @staticmethod
@@ -97,36 +95,4 @@ class Config(object):
     def write_config(self, save_path):
         yaml_file_object = open(os.path.join(save_path, "configuration.yaml"), "w")
         yaml.dump(self.get_run_config(), yaml_file_object, default_flow_style=False)
-        self._run_property.store(open(self.get_properties_file(save_path), "w"))
-
-    @staticmethod
-    def create_version(directory):
-        subdir = os.listdir(directory)
-        if len(subdir) == 0:
-            version_number = 1
-        else:
-            existing_version = list()
-            for sub in subdir:
-                version_number = sub[1:]
-                existing_version.append(int(version_number))
-            existing_version.sort()
-            version_number = existing_version[-1] + 1
-        current_version = "v" + str(version_number)
-
-        return current_version
-
-    @classmethod
-    def create_config(cls, config_path, config_restriction=None):
-        conf = cls.read_config_yaml(config_path)
-        return cls(conf, config_restriction)
-
-    def set_run_property(self, path):
-        self._run_property = self.read_properties_file(path)
-
-    @property
-    def config_restriction(self):
-        return self._config_section
-
-    @config_restriction.setter
-    def config_restriction(self, value):
-        self._config_section = value
+        self.additional_config.store(open(self.get_properties_file(save_path), "w"))

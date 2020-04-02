@@ -3,14 +3,8 @@ from sklearn.metrics import confusion_matrix
 from sklearn.utils.multiclass import type_of_target
 from torch import Tensor
 
+from ml.commons.utils.tensor_util import convert_tensor_to_numpy
 from ml.pt.logger import PtLogger
-
-
-def convert_tensor_to_numpy(ip):
-    if ip.is_cuda:
-        return ip.data.cpu().numpy()
-    else:
-        return ip.data.numpy()
 
 
 def get_numpy(ip):

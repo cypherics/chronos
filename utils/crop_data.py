@@ -2,15 +2,8 @@ import os
 import rasterio
 import numpy as np
 from PIL import Image
-from sys import stdout
 
-
-class Printer:
-    """Print things to stdout on one line dynamically"""
-
-    def __init__(self, data):
-        stdout.write("\r\x1b[K" + data.__str__())
-        stdout.flush()
+from utils.system_printer import SystemPrinter
 
 
 def get_windows(crop_size, img_size, sliding_len):
@@ -151,7 +144,9 @@ def perform_crop_image_label(
     sliding_len = get_sliding_len(crop_size, image_dimension)
 
     for iterator, file_name in enumerate(all_the_files):
-        Printer(str(iterator) + "/" + str(len(all_the_files)))
+        SystemPrinter.dynamic_print(
+            "Crop", str(iterator) + "/" + str(len(all_the_files))
+        )
 
         image_file = os.path.join(image_dir, file_name)
         label_file = os.path.join(label_dir, file_name)
@@ -201,7 +196,9 @@ def perform_crop_image(
 
     sliding_len = get_sliding_len(crop_size, image_dimension)
     for iterator, file_name in enumerate(all_the_files):
-        Printer(str(iterator) + "/" + str(len(all_the_files)))
+        SystemPrinter.dynamic_print(
+            "Crop", str(iterator) + "/" + str(len(all_the_files))
+        )
         image_file = os.path.join(image_dir, file_name)
 
         image_rasterio = rasterio.open(image_file, driver="GTiff")

@@ -6,7 +6,7 @@ from torch import nn
 from ml.commons.metrics import compute_metric
 from ml.pt.logger import PtLogger
 from utils.dictionary_set import handle_dictionary
-from ml.commons.utils.torch_tensor_conversion import cuda_variable
+from ml.commons.utils.tensor_util import cuda_variable
 
 from abc import ABCMeta, abstractmethod
 
@@ -32,7 +32,9 @@ class BaseEvaluator(metaclass=ABCMeta):
         ongoing_count = 1
         total_count = len(valid_loader)
         for input_data in valid_loader:
-            SystemPrinter.dynamic_print(tag=str("Validation"), data="{}/{}".format(ongoing_count, total_count))
+            SystemPrinter.dynamic_print(
+                tag=str("Validation"), data="{}/{}".format(ongoing_count, total_count)
+            )
 
             ongoing_count += 1
             input_data = cuda_variable(input_data)
@@ -67,7 +69,6 @@ class BaseEvaluator(metaclass=ABCMeta):
 
             return stack_img
 
-    @PtLogger(debug=True)
     def handle_prediction(self, prediction):
         prediction = self.get_prediction_as_per_instance(prediction)
         prediction = self.classifier_activation(prediction)

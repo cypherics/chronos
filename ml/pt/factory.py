@@ -4,7 +4,7 @@ from ml.ml_type.base.base_factory import Factory
 from ml.pt.logger import PtLogger
 
 
-class Plugin:
+class PtPlugin:
     def __init__(self, config):
         self.config = config
         self.factory = self.create_factory()

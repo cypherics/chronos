@@ -7,7 +7,7 @@ import time
 
 import numpy as np
 import cv2
-from ml.commons.utils.torch_tensor_conversion import to_tensor
+from ml.commons.utils.tensor_util import to_tensor
 from ml.pt.logger import PtLogger
 from utils import date_time_utility
 from utils.directory_handler import make_directory
@@ -196,4 +196,6 @@ class PredictionSaveCallback(Callback):
             os.makedirs(save_path)
 
             save_image_path = os.path.join(save_path, "{}.png".format(batch))
-            cv2.imwrite(save_image_path, img_data["img"])
+            cv2.imwrite(
+                save_image_path, cv2.cvtColor(img_data["img"], cv2.COLOR_RGB2BGR)
+            )

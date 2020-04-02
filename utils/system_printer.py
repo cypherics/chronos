@@ -9,5 +9,5 @@ class SystemPrinter:
         sys.stdout.flush()
 
     @staticmethod
-    def sys_print(data):
-        sys.stdout.writelines([data])
+    def sys_print(data: str):
+        sys.stdout.writelines(data)

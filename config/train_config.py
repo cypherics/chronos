@@ -1,20 +1,42 @@
 import os
-from utils import directory_handler
 
-from config.config import Config
+from pyjavaproperties import Properties
 
 
-class TrainConfig(Config):
-    def __init__(self, conf, config_restriction):
-        super().__init__(conf, config_restriction)
+from config.config import PtConfig
+from utils.directory_handler import (
+    create_version,
+    level_2_folder_creation,
+    create_weights_path,
+)
 
-    def create_weights_path(self):
-        version_path = directory_handler.make_directory(
-            self.training_path, self.version
+
+class TrainConfig(PtConfig):
+    def __init__(self, config_path, restriction):
+        super().__init__(config_path, restriction)
+        self.additional_config = self.generate_additional_config(
+            os.path.dirname(config_path)
         )
-        default_weights_path = os.path.join(version_path, "default_checkpoint.pt")
-        best_weights_path = os.path.join(version_path, "best_checkpoint.pt")
-        return default_weights_path, best_weights_path
+
+    def generate_additional_config(self, config_path):
+        if os.path.exists(self.get_properties_file(config_path)):
+            return self.read_properties_file(config_path)
+        else:
+            additional_config = Properties()
+            additional_config["root_folder"], _, additional_config[
+                "training_path"
+            ] = level_2_folder_creation(self.experiment_name, self.model, "training")
+            additional_config["Version"] = create_version(
+                additional_config["training_path"]
+            )
+
+            additional_config["chk_path"], additional_config[
+                "best_chk_path"
+            ] = create_weights_path(
+                additional_config["training_path"], additional_config["Version"]
+            )
+
+            return additional_config
 
     @property
     def transformation(self):
@@ -81,56 +103,21 @@ class TrainConfig(Config):
         return self.get_sub_property("OPTIMIZER", "PARAM")
 
     @property
-    def training_state(self):
-        return self.get_property("training_state")
-
-    @property
     def training_path(self):
-        return self.get_property("training_path")
-
-    @training_path.setter
-    def training_path(self, value):
-        self.set_property("training_path", value)
+        return self.get_additional_property("training_path")
 
     @property
     def root_folder(self):
-        return self.get_property("root_folder")
-
-    @root_folder.setter
-    def root_folder(self, value):
-        self.set_property("root_folder", value)
+        return self.get_additional_property("root_folder")
 
     @property
     def version(self):
-        return self.get_property("Version")
-
-    @version.setter
-    def version(self, value):
-        self.set_property("Version", value)
+        return self.get_additional_property("Version")
 
     @property
     def chk_path(self):
-        return self.get_property("chk_path")
-
-    @chk_path.setter
-    def chk_path(self, value):
-        self.set_property("chk_path", value)
+        return self.get_additional_property("chk_path")
 
     @property
     def best_chk_path(self):
-        return self.get_property("best_chk_path")
-
-    @best_chk_path.setter
-    def best_chk_path(self, value):
-        self.set_property("best_chk_path", value)
-
-    def set_additional_property(self):
-        self.root_folder, _, self.training_path = self.folder_creation(
-            self.experiment_name, self.model
-        )
-        self.version = (
-            self.create_version(self.training_path)
-            if self.training_state == "DEFAULT"
-            else self.get_property("Version")
-        )
-        self.chk_path, self.best_chk_path = self.create_weights_path()
+        return self.get_additional_property("best_chk_path")

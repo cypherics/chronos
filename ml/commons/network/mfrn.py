@@ -318,7 +318,7 @@ if __name__ == "__main__":
     model.eval()
     image = torch.randn(2, 3, 384, 384)
     image_temp = torch.randn(2, 3, 288, 288)
-    from ml.commons.utils.torch_tensor_conversion import cuda_variable
+    from ml.commons.utils.tensor_util import cuda_variable
 
     with torch.no_grad():
         output = model.forward(image)

@@ -1,5 +1,4 @@
 import random
-import sys
 import os
 
 import numpy as np
@@ -15,16 +14,15 @@ from ml.commons.callbacks import (
     TimeCallback,
     PredictionSaveCallback,
 )
-from ml.commons.utils.torch_tensor_conversion import to_tensor
-from ml.commons.utils import torch_tensor_conversion
-from ml.state.train import TrainState
+from ml.commons.utils import tensor_util
+from ml.pt.state import PtState
 from utils.dictionary_set import dict_to_string, handle_dictionary
 from ml.pt.logger import PtLogger
 from ml.commons.scheduler import get_scheduler
 from utils.system_printer import SystemPrinter
 
 
-class Trainer(TrainState):
+class PtRunner(PtState):
     def __init__(self):
         super().__init__()
 
@@ -54,7 +52,10 @@ class Trainer(TrainState):
 
         scheduler = get_scheduler(
             config.scheduler,
-            **{**config.scheduler_param, **{"optimizer": self.optimizer}}
+            **{
+                **config.scheduler_param,
+                **{"optimizer": self.optimizer, "epoch": self.starting_epoch},
+            }
         )
 
         callbacks = (
@@ -106,7 +107,7 @@ class Trainer(TrainState):
                     if not self.model.training:
                         self.model.train()
 
-                    input_data = torch_tensor_conversion.cuda_variable(input_data)
+                    input_data = tensor_util.cuda_variable(input_data)
 
                     outputs = self.model(input_data)
                     calculated_loss = criterion(outputs=outputs, **input_data)
@@ -141,8 +142,13 @@ class Trainer(TrainState):
                 valid_loss = valid_metrics["valid_loss"]
                 epoch_logs = handle_dictionary(epoch_logs, "valid_loss", valid_loss)
 
-                metric_str = dict_to_string({**{"train_loss": mean_loss}, **valid_metrics})
-                SystemPrinter.sys_print("METRIC: {}".format(metric_str))
+                metric_str = dict_to_string(
+                    {
+                        **{"Epoch": ongoing_epoch, "train_loss": mean_loss},
+                        **valid_metrics,
+                    }
+                )
+                SystemPrinter.sys_print("{}".format(metric_str))
                 epoch_logs = handle_dictionary(
                     epoch_logs,
                     "plt_loss",

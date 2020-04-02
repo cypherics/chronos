@@ -1,14 +1,15 @@
 import os
-from ml.commons.utils.model_utility import (
+from ml.commons.utils.model_util import (
     get_current_state,
     set_model_state,
     set_optimizer_state,
     load_parallel_model,
 )
 from ml.pt.logger import PtLogger
+from utils.system_printer import SystemPrinter
 
 
-class TrainState(object):
+class PtState:
     def __init__(self):
         self._model = None
         self._optimizer = None
@@ -65,24 +66,47 @@ class TrainState(object):
     def compress_state_obj(self):
         return {
             "model": self.model.state_dict(),
-            "optimizer": self.optimizer.state_dict(),
+            "optimizer": self.optimizer.state_dict()
+            if self.optimizer is not None
+            else "NA",
             "starting_epoch": self.starting_epoch,
             "step": self.step,
-            "bst_vld_loss": self.bst_vld_loss,
+            "bst_vld_loss": self.bst_vld_loss
+            if self.bst_vld_loss is not None
+            else "NA",
         }
 
     @PtLogger(debug=True)
     def extract_state(self, pth):
         if os.path.exists(pth):
             ongoing_state = get_current_state(pth)
-            self.model = set_model_state(self.model, ongoing_state["model"])
+            if self.check_key_and_none(ongoing_state, "model"):
+                self.model = set_model_state(self.model, ongoing_state["model"])
+
             self.model = load_parallel_model(self.model)
 
-            self.optimizer = set_optimizer_state(
-                self.optimizer, ongoing_state["optimizer"]
-            )
-            self.starting_epoch = ongoing_state["starting_epoch"]
-            self.step = ongoing_state["step"]
-            self.bst_vld_loss = ongoing_state["bst_vld_loss"]
+            if self.check_key_and_none(ongoing_state, "optimizer"):
+                self.optimizer = set_optimizer_state(
+                    self.optimizer, ongoing_state["optimizer"]
+                )
+            if self.check_key_and_none(ongoing_state, "starting_epoch"):
+                self.starting_epoch = ongoing_state["starting_epoch"]
+
+            if self.check_key_and_none(ongoing_state, "step"):
+                self.step = ongoing_state["step"]
+
+            if self.check_key_and_none(ongoing_state, "bst_vld_loss"):
+                self.bst_vld_loss = ongoing_state["bst_vld_loss"]
         else:
             self.model = load_parallel_model(self.model)
+
+    @staticmethod
+    def check_key_and_none(state, key):
+        if key not in state:
+            SystemPrinter.sys_print("{} not Found, Setting to default".format(key))
+            return False
+        elif state[key] is None:
+            SystemPrinter.sys_print("None {} Found, Setting to default".format(key))
+            return False
+        else:
+            return True
