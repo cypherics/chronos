@@ -1,3 +1,4 @@
+import logging
 import os
 import shutil
 
@@ -16,6 +17,8 @@ from utils.system_printer import SystemPrinter
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore")
     from torch.utils.tensorboard import SummaryWriter
+
+logger = logging.getLogger("PyTrainer-log")
 
 
 class CallbackList(object):
@@ -97,7 +100,6 @@ class Callback(object):
         pass
 
 
-@PtLogger(debug=True)
 class TrainStateCallback(Callback):
     def __init__(self, save_path, best_save_path):
         super().__init__()
@@ -105,6 +107,7 @@ class TrainStateCallback(Callback):
         self.best = best_save_path
         self.previous_best = None
 
+    @PtLogger(debug=True)
     def on_epoch_end(self, epoch, logs=None):
         valid_loss = logs["valid_loss"]
         my_state = logs["my_state"]
@@ -113,6 +116,7 @@ class TrainStateCallback(Callback):
             torch.save(my_state, str(self.best))
         torch.save(my_state, str(self.chk))
 
+    @PtLogger(debug=True)
     def interruption(self, logs=None):
         my_state = logs["my_state"]
 

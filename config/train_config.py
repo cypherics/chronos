@@ -76,7 +76,8 @@ class TrainConfig(PtConfig):
 
     @property
     def model_param(self):
-        return self.get_property("MODEL_PARAM")
+        param = self.get_property("MODEL_PARAM")
+        return param if param is not None else {"NA": "NA"}
 
     @property
     def loss(self):
@@ -84,7 +85,8 @@ class TrainConfig(PtConfig):
 
     @property
     def loss_param(self):
-        return self.get_sub_property("LOSS", "PARAM")
+        param = self.get_sub_property("LOSS", "PARAM")
+        return param if param is not None else {"NA": "NA"}
 
     @property
     def scheduler(self):
@@ -92,7 +94,8 @@ class TrainConfig(PtConfig):
 
     @property
     def scheduler_param(self):
-        return self.get_sub_property("SCHEDULER", "PARAM")
+        param = self.get_sub_property("SCHEDULER", "PARAM")
+        return param if param is not None else {"NA": "NA"}
 
     @property
     def optimizer(self):
@@ -100,7 +103,8 @@ class TrainConfig(PtConfig):
 
     @property
     def optimizer_param(self):
-        return self.get_sub_property("OPTIMIZER", "PARAM")
+        param = self.get_sub_property("OPTIMIZER", "PARAM")
+        return param if param is not None else {"NA": "NA"}
 
     @property
     def training_path(self):

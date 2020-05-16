@@ -70,6 +70,17 @@ def remove_nd_array(*args, **kwargs):
     return tuple(new_arg), new_kwargs
 
 
+def get_function_name(fn):
+    class_name = vars(sys.modules[fn.__module__])[
+        fn.__qualname__.split(".")[0]
+    ].__name__
+    fn_name = fn.__name__
+    if class_name == fn_name:
+        return fn_name
+    else:
+        return class_name + "-->" + fn_name
+
+
 class PtLogger(object):
     def __init__(self, debug=False):
         self.logger = logging.getLogger("PyTrainer-log")
@@ -83,11 +94,11 @@ class PtLogger(object):
                 if self.debug:
                     self.logger.debug(
                         "{0} - {1} - {2} - {3}".format(
-                            "Input to", fn.__name__, new_args, new_kwargs
+                            "Input to", get_function_name(fn), new_args, new_kwargs
                         )
                     )
                 else:
-                    self.logger.info("{}".format(fn.__name__).upper())
+                    self.logger.info("{}".format(get_function_name(fn)).upper())
                 result = fn(*args, **kwargs)
                 if self.debug:
                     new_args, _ = (
@@ -96,7 +107,9 @@ class PtLogger(object):
                         else remove_nd_array(*[result])
                     )
                     self.logger.debug(
-                        "{0} - {1} - {2}".format("Output of", fn.__name__, new_args)
+                        "{0} - {1} - {2}".format(
+                            "Output of", get_function_name(fn), new_args
+                        )
                     )
                 return result
             except KeyboardInterrupt as ex:

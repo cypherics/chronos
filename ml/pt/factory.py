@@ -2,6 +2,7 @@ import os
 
 from ml.ml_type.base.base_factory import Factory
 from ml.pt.logger import PtLogger
+from utils.system_printer import SystemPrinter
 
 
 class PtPlugin:
@@ -25,4 +26,7 @@ class PtPlugin:
 
         for cls in Factory.__subclasses__():
             f = cls(self.config)
+            SystemPrinter.sys_print(
+                "\t LOADED PLUGIN FACTORY - {}".format(f.__class__.__name__)
+            )
             return f

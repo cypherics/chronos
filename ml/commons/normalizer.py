@@ -5,7 +5,6 @@ from sklearn.preprocessing import MinMaxScaler
 from ml.pt.logger import PtLogger
 
 
-@PtLogger(debug=True)
 class Normalize:
     def __init__(self, mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)):
         self.mean = mean
@@ -21,7 +20,6 @@ class Normalize:
         return img
 
 
-@PtLogger(debug=True)
 class MinMax:
     def __init__(self):
         self.normalization = "minmax"
@@ -40,7 +38,6 @@ class MinMax:
         return out.astype(np.float32)
 
 
-@PtLogger(debug=True)
 class MinMaxImageNet:
     def __init__(self):
         self.normalization = "minmax"
@@ -75,11 +72,23 @@ class MinMaxScaleImageNet:
         return img.astype(np.float32)
 
 
-@PtLogger(debug=True)
 class DivideBy255:
     def __init__(self):
         self.normalization = "divide_by_255"
 
     def __call__(self, img: np.ndarray) -> np.ndarray:
         img = img.astype(np.float32) / 255
+        return img
+
+
+class InriaData:
+    def __init__(self):
+        self.mean = (0.42068335885143315, 0.43821200008781647, 0.4023395608370018)
+        self.std_dev = (0.03871459540580076, 0.039615887087616986, 0.04203108867447648)
+
+        self.normalize = Normalize(mean=self.mean, std=self.std_dev)
+
+    def __call__(self, img: np.ndarray) -> np.ndarray:
+        img = img.astype(np.float32) / 255
+        img = self.normalize.__call__(img, True)
         return img

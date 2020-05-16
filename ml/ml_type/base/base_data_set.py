@@ -11,8 +11,7 @@ from ml.commons.utils.image_util import (
     get_random_crop_x_and_y,
     crop_image,
 )
-from ml.commons import augmentation, normalizer
-
+from ml.commons import augmentator, normalizer
 from abc import ABCMeta, abstractmethod
 
 from ml.pt.logger import PtLogger
@@ -117,7 +116,7 @@ class BaseDataSetPt(Dataset, metaclass=ABCMeta):
         if number_of_transformation == 1:
             transformation = transformation_to_applied[0]
         else:
-            transformation = getattr(augmentation, transform_type)(
+            transformation = getattr(augmentator, transform_type)(
                 transformation_to_applied, prob=0.5
             )
         return transformation
@@ -125,10 +124,10 @@ class BaseDataSetPt(Dataset, metaclass=ABCMeta):
     @staticmethod
     def _get_train_transformation(to_perform, transform_type, augment_prob):
         transformation = []
-        transforms_type = getattr(augmentation, transform_type)
+        transforms_type = getattr(augmentator, transform_type)
 
         for trans in to_perform:
-            transformation.append(getattr(augmentation, trans)(prob=augment_prob))
+            transformation.append(getattr(augmentator, trans)(prob=augment_prob))
 
         train_transformation = transforms_type(transformation)
         return train_transformation
@@ -157,12 +156,10 @@ class BaseDataSetPt(Dataset, metaclass=ABCMeta):
         else:
             return img, mask
 
-    @PtLogger(debug=True)
     def perform_normalization(self, img):
         img = self.normalization(img)
         return img
 
-    @PtLogger(debug=True)
     def perform_transformation(self, img, mask):
         if self.mode == "train":
             img, mask = self.transform(img, mask)

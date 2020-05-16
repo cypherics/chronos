@@ -98,7 +98,6 @@ class PtRunner(PtState):
             losses = []
 
             tl = train_loader
-
             try:
                 mean_loss = 0
                 for i, input_data in enumerate(tl):

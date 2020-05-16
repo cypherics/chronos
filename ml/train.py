@@ -4,6 +4,7 @@ from ml.pt.factory import PtPlugin
 from ml.pt.runner import PtRunner
 from config.train_config import TrainConfig
 from ml.pt.logger import create_logger, PtLogger
+from utils.system_printer import SystemPrinter
 
 CONFIG_RESTRICTION = ["DATASET", "MODEL", "TRAIN"]
 
@@ -82,7 +83,14 @@ class Train:
     @PtLogger()
     def load_plugin(self, plugin, config):
         self.model = plugin.factory.create_network(config.model, config.model_param)
+        SystemPrinter.sys_print(
+            "\t LOADED MODEL - {}".format(self.model.__class__.__name__)
+        )
+
         self.criterion = plugin.factory.create_criterion(config.loss, config.loss_param)
+        SystemPrinter.sys_print(
+            "\t LOADED CRITERION - {}".format(self.criterion.__class__.__name__)
+        )
 
         self.evaluator = plugin.factory.create_evaluator()
         self.train_data_loader, self.val_data_loader, self.test_data_loader = (

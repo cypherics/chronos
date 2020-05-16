@@ -13,10 +13,10 @@ class SpatialPooling(nn.Module):
 
     def forward(self, x):
         _, _, w, h = x.shape
-        p1 = F.upsample(self.max_pool_1(x), size=(w, h), mode="bilinear")
-        p2 = F.upsample(self.max_pool_2(x), size=(w, h), mode="bilinear")
-        p3 = F.upsample(self.max_pool_3(x), size=(w, h), mode="bilinear")
-        p4 = F.upsample(self.max_pool_4(x), size=(w, h), mode="bilinear")
+        p1 = F.interpolate(self.max_pool_1(x), size=(w, h), mode="bilinear")
+        p2 = F.interpolate(self.max_pool_2(x), size=(w, h), mode="bilinear")
+        p3 = F.interpolate(self.max_pool_3(x), size=(w, h), mode="bilinear")
+        p4 = F.interpolate(self.max_pool_4(x), size=(w, h), mode="bilinear")
 
         out = torch.cat([p1, p2, p3, p4, x], 1)
         return out
