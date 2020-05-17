@@ -164,12 +164,14 @@ class PtRunner(PtState):
                     self.bst_vld_loss = valid_loss
 
                 callbacks.on_epoch_end(
-                    self.starting_epoch, logs={**epoch_logs, **self.state_obj}
+                    self.starting_epoch, logs={**epoch_logs, **self.state_obj_epoch}
                 )
 
             except KeyboardInterrupt:
                 tq.close()
-                callbacks.interruption(logs={**epoch_logs, **self.state_obj})
+                callbacks.interruption(
+                    logs={**epoch_logs, **self.state_obj_interruption}
+                )
                 SystemPrinter.sys_print(
                     "KEYBOARD EXCEPTION CHECKPOINT SAVED : {}".format(ongoing_epoch)
                 )

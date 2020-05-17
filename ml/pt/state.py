@@ -59,17 +59,23 @@ class PtState:
         self._step = value
 
     @property
-    def state_obj(self):
-        return {"my_state": self.compress_state_obj()}
+    def state_obj_epoch(self):
+        return {"my_state": self.compress_state_obj("complete")}
+
+    @property
+    def state_obj_interruption(self):
+        return {"my_state": self.compress_state_obj("interrupt")}
 
     @PtLogger(debug=True)
-    def compress_state_obj(self):
+    def compress_state_obj(self, run_state):
         return {
             "model": self.model.state_dict(),
             "optimizer": self.optimizer.state_dict()
             if self.optimizer is not None
             else "NA",
-            "starting_epoch": self.starting_epoch,
+            "starting_epoch": self.starting_epoch + 1
+            if run_state == "complete"
+            else self.starting_epoch,
             "step": self.step,
             "bst_vld_loss": self.bst_vld_loss
             if self.bst_vld_loss is not None
