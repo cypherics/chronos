@@ -1,7 +1,7 @@
 import os
 
 from ml.ml_type.base.base_factory import Factory
-from ml.pt.logger import PtLogger
+from ml.pt.logger import info
 from utils.system_printer import SystemPrinter
 
 
@@ -10,7 +10,7 @@ class PtPlugin:
         self.config = config
         self.factory = self.create_factory()
 
-    @PtLogger()
+    @info
     def create_factory(self):
 
         plugin_name = self.config.problem_type

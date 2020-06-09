@@ -7,18 +7,21 @@ from ml.commons.utils.image_util import (
     crop_image,
     perform_scale,
 )
-from ml.pt.logger import PtLogger
+from ml.pt.logger import debug, DominusLogger
+
+logger = DominusLogger.get_logger()
 
 
 class MirrorCrop:
+    @debug
     def __init__(self, prob=0.5):
         self.prob = prob
 
-    @PtLogger(debug=True)
     def __call__(self, img, mask):
         if random.random() < self.prob:
+            logger.debug("Running {}".format(self.__class__.__name__))
             image_dim = img.shape
-            dim = random.choice([224, 256, 300])
+            dim = random.choice([384, 352, 416])
             height, width = get_random_crop_x_and_y((dim, dim), img.shape)
             img = crop_image(img, (dim, dim), (height, width))
             mask = crop_image(mask, (dim, dim), (height, width))
@@ -33,15 +36,16 @@ class MirrorCrop:
 
 
 class RescaleCrop:
+    @debug
     def __init__(self, prob=0.5):
         self.prob = prob
 
-    @PtLogger(debug=True)
     def __call__(self, img, mask):
         dim_h, dim_w, _ = img.shape
         if random.random() < self.prob:
             # dim = random.choice([256, 300])
-            dim = random.randint(256, 350)
+            dim = random.randint(384, 416)
+            logger.debug("Running {} with dim {}".format(self.__class__.__name__, dim))
             height, width = get_random_crop_x_and_y((dim, dim), img.shape)
             img = crop_image(img, (dim, dim), (height, width))
             mask = crop_image(mask, (dim, dim), (height, width))
@@ -51,12 +55,13 @@ class RescaleCrop:
 
 
 class VerticalFlip:
+    @debug
     def __init__(self, prob=0.5):
         self.prob = prob
 
-    @PtLogger(debug=True)
     def __call__(self, img, mask=None):
         if random.random() < self.prob:
+            logger.debug("Running {}".format(self.__class__.__name__))
             img = cv2.flip(img, 0)
             if mask is not None:
                 mask = cv2.flip(mask, 0)
@@ -64,12 +69,13 @@ class VerticalFlip:
 
 
 class HorizontalFlip:
+    @debug
     def __init__(self, prob=0.5):
         self.prob = prob
 
-    @PtLogger(debug=True)
     def __call__(self, img, mask=None):
         if random.random() < self.prob:
+            logger.debug("Running {}".format(self.__class__.__name__))
             img = cv2.flip(img, 1)
             if mask is not None:
                 mask = cv2.flip(mask, 1)
@@ -77,13 +83,14 @@ class HorizontalFlip:
 
 
 class RandomFlip:
+    @debug
     def __init__(self, prob=0.5):
         self.prob = prob
 
-    @PtLogger(debug=True)
     def __call__(self, img, mask=None):
         if random.random() < self.prob:
             d = random.randint(-1, 1)
+            logger.debug("Running {} with flip {}".format(self.__class__.__name__, d))
             img = cv2.flip(img, d)
             if mask is not None:
                 mask = cv2.flip(mask, d)
@@ -91,13 +98,16 @@ class RandomFlip:
 
 
 class RandomRotate90:
+    @debug
     def __init__(self, prob=0.5):
         self.prob = prob
 
-    @PtLogger(debug=True)
     def __call__(self, img, mask=None):
         if random.random() < self.prob:
             factor = random.randint(0, 4)
+            logger.debug(
+                "Running {} with factor {}".format(self.__class__.__name__, factor)
+            )
             img = np.rot90(img, factor)
             if mask is not None:
                 mask = np.rot90(mask, factor)
@@ -105,13 +115,14 @@ class RandomRotate90:
 
 
 class Rotate:
+    @debug
     def __init__(self, limit=90, prob=0.5):
         self.prob = prob
         self.limit = limit
 
-    @PtLogger(debug=True)
     def __call__(self, img, mask=None):
         if random.random() < self.prob:
+            logger.debug("Running {}".format(self.__class__.__name__))
             angle = random.uniform(-self.limit, self.limit)
 
             height, width = img.shape[0:2]

@@ -1,9 +1,11 @@
 import torch
 
-from ml.pt.logger import PtLogger
+from ml.pt.logger import debug, DominusLogger
+
+logger = DominusLogger.get_logger()
 
 
-@PtLogger(debug=True)
+@debug
 def get_gpu_device_ids():
     device_id = list()
     separator = ","
@@ -14,13 +16,12 @@ def get_gpu_device_ids():
     return device_id
 
 
-@PtLogger()
+@debug
 def get_current_state(weight_path):
     state = torch.load(str(weight_path), map_location="cpu")
     return state
 
 
-@PtLogger()
 def set_model_state(model, state):
     if state is not None:
         model_cuda = adjust_model(state)
@@ -28,13 +29,11 @@ def set_model_state(model, state):
     return model
 
 
-@PtLogger()
 def set_optimizer_state(optimizer, state):
     optimizer.load_state_dict(state)
     return optimizer
 
 
-@PtLogger()
 def load_parallel_model(model):
     if torch.cuda.is_available():
         device_ids = get_gpu_device_ids()
@@ -48,7 +47,6 @@ def load_parallel_model(model):
         return model
 
 
-@PtLogger(debug=True)
 def adjust_model(state):
     # WhenEver a model is trained on multi gpu using DataParallel, module keyword is added
     model = {

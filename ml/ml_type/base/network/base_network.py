@@ -1,5 +1,8 @@
+import torch
 from torch import nn
 from abc import abstractmethod
+
+from ml.commons.utils.model_util import adjust_model
 
 
 class BaseNetwork(nn.Module):
@@ -12,3 +15,11 @@ class BaseNetwork(nn.Module):
     @abstractmethod
     def forward_propagate(self, x):
         pass
+
+    def load_pre_trained(self, pre_trained):
+        pre_trained_dict = torch.load(pre_trained)
+        model_dict = self.state_dict()
+
+        pre_trained_dict = adjust_model(pre_trained_dict)
+        model_dict.update(pre_trained_dict)
+        self.load_state_dict(model_dict)

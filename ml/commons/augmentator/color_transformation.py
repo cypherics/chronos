@@ -2,7 +2,9 @@ import random
 import cv2
 import numpy as np
 
-from ml.pt.logger import PtLogger
+from ml.pt.logger import debug, DominusLogger
+
+logger = DominusLogger.get_logger()
 
 
 def clip(img, dtype, maxval):
@@ -10,14 +12,15 @@ def clip(img, dtype, maxval):
 
 
 class CLAHE:
+    @debug
     def __init__(self, prob=0.5, clipLimit=2.0, tileGridSize=(8, 8)):
         self.clipLimit = clipLimit
         self.tileGridSize = tileGridSize
         self.prob = prob
 
-    @PtLogger(debug=True)
     def __call__(self, im, mask):
         if random.random() < self.prob:
+            logger.debug("Running {}".format(self.__class__.__name__))
             img_bgr = cv2.cvtColor(im, cv2.COLOR_RGB2BGR)
             img_yuv = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2YUV)
             clahe_method = cv2.createCLAHE(
@@ -30,6 +33,7 @@ class CLAHE:
 
 
 class RandomHueSaturationValue:
+    @debug
     def __init__(
         self,
         hue_shift_limit=(-10, 10),
@@ -42,9 +46,9 @@ class RandomHueSaturationValue:
         self.val_shift_limit = val_shift_limit
         self.prob = prob
 
-    @PtLogger(debug=True)
     def __call__(self, image, mask):
         if random.random() < self.prob:
+            logger.debug("Running {}".format(self.__class__.__name__))
             image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
             h, s, v = cv2.split(image)
             hue_shift = np.random.uniform(
@@ -65,13 +69,14 @@ class RandomHueSaturationValue:
 
 
 class RandomContrast:
+    @debug
     def __init__(self, limit=0.1, prob=0.5):
         self.limit = limit
         self.prob = prob
 
-    @PtLogger(debug=True)
     def __call__(self, img, mask):
         if random.random() < self.prob:
+            logger.debug("Running {}".format(self.__class__.__name__))
             alpha = 1.0 + self.limit * random.uniform(-1, 1)
             img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
 
@@ -86,13 +91,14 @@ class RandomContrast:
 
 
 class RandomBrightness:
+    @debug
     def __init__(self, limit=0.1, prob=0.5):
         self.limit = limit
         self.prob = prob
 
-    @PtLogger(debug=True)
     def __call__(self, img, mask):
         if random.random() < self.prob:
+            logger.debug("Running {}".format(self.__class__.__name__))
             alpha = 1.0 + self.limit * random.uniform(-1, 1)
 
             maxval = np.max(img[..., :3])
@@ -106,13 +112,14 @@ class RandomFilter:
     blur sharpen, etc
     """
 
+    @debug
     def __init__(self, limit=0.5, prob=0.5):
         self.limit = limit
         self.prob = prob
 
-    @PtLogger(debug=True)
     def __call__(self, img, mask):
         if random.random() < self.prob:
+            logger.debug("Running {}".format(self.__class__.__name__))
             alpha = self.limit * random.uniform(0, 1)
             kernel = np.ones((3, 3), np.float32) / 9 * 0.2
 

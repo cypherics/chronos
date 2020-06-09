@@ -1,5 +1,7 @@
 import random
-from ml.pt.logger import PtLogger
+from ml.pt.logger import DominusLogger
+
+logger = DominusLogger.get_logger()
 
 
 class DualCompose:
@@ -7,10 +9,10 @@ class DualCompose:
         self.transforms = transforms
         self.prob = prob
 
-    @PtLogger(debug=True)
     def __call__(self, x, mask=None):
         for t in self.transforms:
             x, mask = t(x, mask)
+            logger.debug("Dual Compose For {}".format(t.__class__.__name__))
         return x, mask
 
 
@@ -19,12 +21,13 @@ class OneOf:
         self.transforms = transforms
         self.prob = prob
 
-    @PtLogger(debug=True)
     def __call__(self, x, mask=None):
         if random.random() < self.prob:
             t = random.choice(self.transforms)
             t.prob = 1.0
             x, mask = t(x, mask)
+            logger.debug("One Of For {}".format(t.__class__.__name__))
+
         return x, mask
 
 
@@ -36,10 +39,11 @@ class OneOrOther:
         second.prob = 1.0
         self.prob = prob
 
-    @PtLogger(debug=True)
     def __call__(self, x, mask=None):
         if random.random() < self.prob:
             x, mask = self.first(x, mask)
+            logger.debug("OneOrOther For {}".format(self.first.__class__.__name__))
         else:
             x, mask = self.second(x, mask)
+            logger.debug("OneOrOther For {}".format(self.second.__class__.__name__))
         return x, mask

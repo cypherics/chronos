@@ -4,7 +4,7 @@ import torch
 from torch import nn
 
 from ml.commons.metrics import compute_metric
-from ml.pt.logger import PtLogger
+from ml.pt.logger import debug, DominusLogger
 from utils.dictionary_set import handle_dictionary
 from ml.commons.utils.tensor_util import cuda_variable
 
@@ -12,10 +12,12 @@ from abc import ABCMeta, abstractmethod
 
 from utils.system_printer import SystemPrinter
 
+logger = DominusLogger.get_logger()
+
 
 class BaseEvaluator(metaclass=ABCMeta):
     @staticmethod
-    @PtLogger(debug=True)
+    @debug
     def compute_mean_metric(metric: dict):
         mean_metric = dict()
         for key, value in metric.items():
@@ -26,14 +28,21 @@ class BaseEvaluator(metaclass=ABCMeta):
 
     @torch.no_grad()
     def perform_validation(self, model: nn.Module, loss_function, valid_loader):
+        logger.debug("Validation In Progress")
         model.eval()
         losses = []
         metric = dict()
         ongoing_count = 1
         total_count = len(valid_loader)
+        sys_print = SystemPrinter()
         for input_data in valid_loader:
-            SystemPrinter.dynamic_print(
-                tag=str("Validation"), data="{}/{}".format(ongoing_count, total_count)
+            sys_print.dynamic_print(
+                tag=str("Validation"),
+                data="{}/{} -> {}".format(
+                    ongoing_count,
+                    total_count,
+                    sys_print.compute_eta(ongoing_count, total_count),
+                ),
             )
 
             ongoing_count += 1

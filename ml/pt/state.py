@@ -5,8 +5,10 @@ from ml.commons.utils.model_util import (
     set_optimizer_state,
     load_parallel_model,
 )
-from ml.pt.logger import PtLogger
+from ml.pt.logger import debug, DominusLogger
 from utils.system_printer import SystemPrinter
+
+logger = DominusLogger.get_logger()
 
 
 class PtState:
@@ -66,7 +68,6 @@ class PtState:
     def state_obj_interruption(self):
         return {"my_state": self.compress_state_obj("interrupt")}
 
-    @PtLogger(debug=True)
     def compress_state_obj(self, run_state):
         return {
             "model": self.model.state_dict(),
@@ -82,12 +83,14 @@ class PtState:
             else "NA",
         }
 
-    @PtLogger(debug=True)
+    @debug
     def extract_state(self, pth):
         if os.path.exists(pth):
+            logger.debug("Loading Existing State {}".format(pth))
             ongoing_state = get_current_state(pth)
             if self.check_key_and_none(ongoing_state, "model"):
                 self.model = set_model_state(self.model, ongoing_state["model"])
+                logger.debug("Existing Model Loaded")
 
             self.model = load_parallel_model(self.model)
 
@@ -95,14 +98,24 @@ class PtState:
                 self.optimizer = set_optimizer_state(
                     self.optimizer, ongoing_state["optimizer"]
                 )
+                logger.debug(
+                    "Existing Optimizer Loaded with lr {}".format(
+                        self.optimizer.param_groups[0]["lr"]
+                    )
+                )
+
             if self.check_key_and_none(ongoing_state, "starting_epoch"):
                 self.starting_epoch = ongoing_state["starting_epoch"]
+                logger.debug("Existing Start Epoch {}".format(self.starting_epoch))
 
             if self.check_key_and_none(ongoing_state, "step"):
                 self.step = ongoing_state["step"]
+                logger.debug("Existing Step Epoch {}".format(self._step))
 
             if self.check_key_and_none(ongoing_state, "bst_vld_loss"):
                 self.bst_vld_loss = ongoing_state["bst_vld_loss"]
+                logger.debug("Existing Best Valid Loss {}".format(self.bst_vld_loss))
+
         else:
             self.model = load_parallel_model(self.model)
 

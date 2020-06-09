@@ -8,11 +8,21 @@ def make_directory(current_dir, folder_name):
     return new_dir
 
 
-def create_weights_path(pth, version):
+def create_state_path(pth, version):
     version_path = make_directory(pth, version)
-    default_weights_path = os.path.join(version_path, "default_checkpoint.pt")
-    best_weights_path = os.path.join(version_path, "best_checkpoint.pt")
+    state_path = make_directory(version_path, "state")
+    default_weights_path = os.path.join(state_path, "default_state.pt")
+    best_weights_path = os.path.join(state_path, "best_state.pt")
     return default_weights_path, best_weights_path
+
+
+def create_chk_path(pth, exp_name, model, version):
+    version_path = make_directory(pth, version)
+    chk_path = make_directory(version_path, "chk_pt")
+    weights_path = os.path.join(
+        chk_path, "{}_{}_{}_chk.pt".format(exp_name, model, version)
+    )
+    return weights_path
 
 
 def level_2_folder_creation(root, level_1, level_2):

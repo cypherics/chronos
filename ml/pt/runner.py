@@ -13,13 +13,16 @@ from ml.commons.callbacks import (
     SchedulerCallback,
     TimeCallback,
     PredictionSaveCallback,
+    TrainChkCallback,
 )
 from ml.commons.utils import tensor_util
 from ml.pt.state import PtState
 from utils.dictionary_set import dict_to_string, handle_dictionary
-from ml.pt.logger import PtLogger
+from ml.pt.logger import info, DominusLogger
 from ml.commons.scheduler import get_scheduler
 from utils.system_printer import SystemPrinter
+
+logger = DominusLogger.get_logger()
 
 
 class PtRunner(PtState):
@@ -27,7 +30,7 @@ class PtRunner(PtState):
         super().__init__()
 
     @staticmethod
-    @PtLogger()
+    @info
     def load_optimizer(model, config):
         optimizer_name = config.optimizer
         optimizer_param = config.optimizer_param
@@ -35,12 +38,12 @@ class PtRunner(PtState):
             filter(lambda p: p.requires_grad, model.parameters()), **optimizer_param
         )
 
-    @PtLogger()
+    @info
     def training(self, instance, config, training_callbacks=None):
         self.model = instance.model
         self.optimizer = self.load_optimizer(self.model, config)
 
-        self.extract_state(config.chk_path)
+        self.extract_state(config.default_state)
         train_loader, val_loader, test_loader = (
             instance.train_data_loader,
             instance.val_data_loader,
@@ -66,7 +69,8 @@ class PtRunner(PtState):
         callbacks.append(
             TensorBoardCallback(os.path.join(config.training_path, config.version))
         )
-        callbacks.append(TrainStateCallback(config.chk_path, config.best_chk_path))
+        callbacks.append(TrainStateCallback(config.default_state, config.best_state))
+        callbacks.append(TrainChkCallback(config.chk_pth))
         callbacks.append(SchedulerCallback(scheduler))
         callbacks.append(TimeCallback())
         callbacks.append(
@@ -90,6 +94,8 @@ class PtRunner(PtState):
 
             tq = tqdm.tqdm(total=(len(train_loader) * batch_size))
             lr = self.optimizer.param_groups[0]["lr"]
+            logger.debug("Setting Learning rate : {}".format(lr))
+
             epoch_logs = handle_dictionary(
                 epoch_logs, "plt_lr", {"data": lr, "tag": "LR/Epoch"}
             )
@@ -140,6 +146,10 @@ class PtRunner(PtState):
                 )
                 valid_loss = valid_metrics["valid_loss"]
                 epoch_logs = handle_dictionary(epoch_logs, "valid_loss", valid_loss)
+                logger.debug(
+                    "Train Loss {}, Valid Loss {}".format(mean_loss, valid_loss)
+                )
+                logger.debug("Metric {}, Chk Saved".format(valid_metrics))
 
                 metric_str = dict_to_string(
                     {

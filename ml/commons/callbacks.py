@@ -1,4 +1,3 @@
-import logging
 import os
 import shutil
 
@@ -8,8 +7,10 @@ import time
 
 import numpy as np
 import cv2
+
+from ml.commons.utils.model_util import adjust_model
+from ml.pt.logger import debug, DominusLogger
 from ml.commons.utils.tensor_util import to_tensor
-from ml.pt.logger import PtLogger
 from utils import date_time_utility
 from utils.directory_handler import make_directory
 from utils.system_printer import SystemPrinter
@@ -18,49 +19,62 @@ with warnings.catch_warnings():
     warnings.filterwarnings("ignore")
     from torch.utils.tensorboard import SummaryWriter
 
-logger = logging.getLogger("PyTrainer-log")
+logger = DominusLogger.get_logger()
 
 
 class CallbackList(object):
     def __init__(self, callbacks=None):
         callbacks = callbacks or []
         self.callbacks = [c for c in callbacks]
+        if len(callbacks) != 0:
+            [
+                logger.debug("Registered {}".format(c.__class__.__name__))
+                for c in callbacks
+            ]
 
     def append(self, callback):
+        logger.debug("Registered {}".format(callback.__class__.__name__))
         self.callbacks.append(callback)
 
     def on_epoch_begin(self, epoch, logs=None):
         logs = logs or {}
         for callback in self.callbacks:
+            logger.debug("On Epoch Begin {}".format(callback.__class__.__name__))
             callback.on_epoch_begin(epoch, logs)
 
     def on_epoch_end(self, epoch, logs=None):
         logs = logs or {}
         for callback in self.callbacks:
+            logger.debug("On Epoch End {}".format(callback.__class__.__name__))
             callback.on_epoch_end(epoch, logs)
 
     def on_batch_begin(self, batch, logs=None):
         for callback in self.callbacks:
+            logger.debug("On Batch Begin {}".format(callback.__class__.__name__))
             callback.on_batch_begin(batch, logs)
 
     def on_batch_end(self, batch, logs=None):
 
         for callback in self.callbacks:
+            logger.debug("On Batch End {}".format(callback.__class__.__name__))
             callback.on_batch_end(batch, logs)
 
     def on_begin(self, logs=None):
         logs = logs or {}
         for callback in self.callbacks:
+            logger.debug("On Begin {}".format(callback.__class__.__name__))
             callback.on_begin(logs)
 
     def on_end(self, logs=None):
         logs = logs or {}
         for callback in self.callbacks:
+            logger.debug("On End {}".format(callback.__class__.__name__))
             callback.on_end(logs)
 
     def interruption(self, logs=None):
         logs = logs or {}
         for callback in self.callbacks:
+            logger.debug("Interruption {}".format(callback.__class__.__name__))
             callback.interruption(logs)
 
     def update_params(self, params):
@@ -101,13 +115,13 @@ class Callback(object):
 
 
 class TrainStateCallback(Callback):
+    @debug
     def __init__(self, save_path, best_save_path):
         super().__init__()
         self.chk = save_path
         self.best = best_save_path
         self.previous_best = None
 
-    @PtLogger(debug=True)
     def on_epoch_end(self, epoch, logs=None):
         valid_loss = logs["valid_loss"]
         my_state = logs["my_state"]
@@ -115,12 +129,17 @@ class TrainStateCallback(Callback):
             self.previous_best = valid_loss
             torch.save(my_state, str(self.best))
         torch.save(my_state, str(self.chk))
+        logger.debug(
+            "Successful on Epoch End {}, Saved State".format(self.__class__.__name__)
+        )
 
-    @PtLogger(debug=True)
     def interruption(self, logs=None):
         my_state = logs["my_state"]
 
         torch.save(my_state, str(self.chk))
+        logger.debug(
+            "Successful on Interruption {}, Saved State".format(self.__class__.__name__)
+        )
 
 
 class TensorBoardCallback(Callback):
@@ -145,6 +164,9 @@ class TensorBoardCallback(Callback):
         lr = logs["plt_lr"]
         self.plt_scalar(lr["data"], epoch, lr["tag"])
         self.plt_scalar(loss["data"], epoch, loss["tag"])
+        logger.debug(
+            "Successful on Epoch End {}, Data Plot".format(self.__class__.__name__)
+        )
 
     def on_batch_end(self, batch, logs=None):
         img_data = logs["plt_img"] if "plt_img" in logs else None
@@ -155,6 +177,9 @@ class TensorBoardCallback(Callback):
             pass
 
         self.plt_scalar(data["data"], batch, data["tag"])
+        logger.debug(
+            "Successful on Batch End {}, Data Plot".format(self.__class__.__name__)
+        )
 
 
 class SchedulerCallback(Callback):
@@ -164,6 +189,9 @@ class SchedulerCallback(Callback):
 
     def on_epoch_end(self, epoch, logs=None):
         self.scheduler.step(epoch)
+        logger.debug(
+            "Successful on Epoch End {}, Lr Scheduled".format(self.__class__.__name__)
+        )
 
 
 class TimeCallback(Callback):
@@ -203,3 +231,29 @@ class PredictionSaveCallback(Callback):
             cv2.imwrite(
                 save_image_path, cv2.cvtColor(img_data["img"], cv2.COLOR_RGB2BGR)
             )
+            logger.debug(
+                "Successful on Batch End {}, Images Saved".format(
+                    self.__class__.__name__
+                )
+            )
+
+
+class TrainChkCallback(Callback):
+    @debug
+    def __init__(self, save_path):
+        super().__init__()
+        self.chk = save_path
+
+    def on_epoch_end(self, epoch, logs=None):
+        my_state = logs["my_state"]
+        torch.save(adjust_model(my_state["model"]), str(self.chk))
+        logger.debug(
+            "Successful on Epoch End {}, Chk Saved".format(self.__class__.__name__)
+        )
+
+    def interruption(self, logs=None):
+        my_state = logs["my_state"]
+        torch.save(adjust_model(my_state["model"]), str(self.chk))
+        logger.debug(
+            "Successful on interruption {}, Chk Saved".format(self.__class__.__name__)
+        )

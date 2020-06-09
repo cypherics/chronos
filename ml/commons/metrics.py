@@ -4,7 +4,7 @@ from sklearn.utils.multiclass import type_of_target
 from torch import Tensor
 
 from ml.commons.utils.tensor_util import convert_tensor_to_numpy
-from ml.pt.logger import PtLogger
+from ml.pt.logger import debug
 from utils.system_printer import SystemPrinter
 
 EPSILON = 1e-11
@@ -17,14 +17,12 @@ def get_numpy(ip):
         return ip
 
 
-@PtLogger(debug=True)
 def to_binary(prediction, cutoff=0.40):
     prediction[prediction >= cutoff] = 1
     prediction[prediction < cutoff] = 0
     return prediction
 
 
-@PtLogger(debug=True)
 def compute_metric(prediction, ground_truth):
     prediction = get_numpy(prediction).flatten()
     ground_truth = get_numpy(ground_truth).flatten()
@@ -52,31 +50,31 @@ def compute_metric(prediction, ground_truth):
         return metrics
 
 
-@PtLogger(debug=True)
+@debug
 def accuracy(tp, fp, fn, tn):
     num = tp + tn
     den = tp + tn + fp + fn
     return num / (den + EPSILON)
 
 
-@PtLogger(debug=True)
+@debug
 def f1_score(tp, fp, fn, tn):
     num = 2 * tp
     den = (2 * tp) + fp + fn
     return num / (den + EPSILON)
 
 
-@PtLogger(debug=True)
+@debug
 def precision(tp, fp, fn, tn):
     return tp / (tp + fp + EPSILON)
 
 
-@PtLogger(debug=True)
+@debug
 def recall(tp, fp, fn, tn):
     return tp / (tp + fn + EPSILON)
 
 
-@PtLogger(debug=True)
+@debug
 def iou(tp, fp, fn, tn):
     denominator = tp + fp + fn
     if denominator == 0:

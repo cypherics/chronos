@@ -1,136 +1,171 @@
 import sys
 import traceback
-import numpy as np
 import os
 import functools
 import logging
-from logging.handlers import RotatingFileHandler
+from logging.handlers import TimedRotatingFileHandler
 
 from utils.date_time_utility import get_date
-from utils.dictionary_set import handle_dictionary
+from utils.directory_handler import make_directory
 
 
-def extract_function_name():
+def extract_detail():
     """Extracts failing function name from Traceback
     by Alex Martelli
     http://stackoverflow.com/questions/2380073/\
     how-to-identify-what-function-call-raise-an-exception-in-python
     """
     tb = sys.exc_info()[-1]
-    stk = traceback.extract_tb(tb, 1)
-    function_name = stk[0][3]
-    return function_name
-
-
-def create_logger(folder_path, exp_name):
-    logger = logging.getLogger("PyTrainer-log")
-    logger.setLevel(logging.DEBUG)
-    log_path = os.path.join(folder_path, exp_name + ".log")
-
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.INFO)
-    log_format = " \033[1;37m>>\033[0m \033[93m[%(asctime)s][%(name)s][%(levelname)s] \033[0;37m-\033[0m %(message)s"
-    formatter = logging.Formatter(log_format)
-    ch.setFormatter(formatter)
-    logger.addHandler(ch)
-
-    fl = logging.FileHandler(log_path)
-    fl.setLevel(logging.INFO)
-    fl_format = logging.Formatter("%(asctime)s %(name)s : %(levelname)s : %(message)s")
-    fl.setFormatter(fl_format)
-    logger.addHandler(fl)
-
-    rfl = RotatingFileHandler(
-        os.path.join(folder_path, exp_name + "_extensive.log"), maxBytes=1024
+    stk = traceback.extract_tb(tb, -1)[0]
+    return "{} in {} line num {} on line {} ".format(
+        stk.name, stk.filename, stk.lineno, stk.line
     )
-    rfl.setLevel(logging.DEBUG)
-    rfl_format = logging.Formatter("%(asctime)s %(name)s : %(levelname)s : %(message)s")
-    rfl.setFormatter(rfl_format)
-    logger.addHandler(rfl)
-
-    logger.info("Experiment {} conducted on : {}".format(exp_name, get_date()))
-
-    sys.stdout.writelines = logger.info
 
 
-def remove_nd_array(*args, **kwargs):
-    new_arg = list()
-    new_kwargs = dict()
-    for individual_argument in args:
-        if type(individual_argument) == np.ndarray:
-            new_arg.append("nd array")
-        else:
-            new_arg.append(individual_argument)
-
-    for key, value in kwargs.items():
-        if type(value) == np.ndarray:
-            new_kwargs = handle_dictionary(new_kwargs, key, "nd array")
-        else:
-            new_kwargs = handle_dictionary(new_kwargs, key, value)
-    return tuple(new_arg), new_kwargs
-
-
-def get_function_name(fn):
+def get_details(fn):
     class_name = vars(sys.modules[fn.__module__])[
         fn.__qualname__.split(".")[0]
     ].__name__
     fn_name = fn.__name__
     if class_name == fn_name:
-        return fn_name
+        return None, fn_name
     else:
-        return class_name + "-->" + fn_name
+        return class_name, fn_name
 
 
-class PtLogger(object):
-    def __init__(self, debug=False):
-        self.logger = logging.getLogger("PyTrainer-log")
-        self.debug = debug
+class DominusLogger:
+    def __init__(self):
+        pass
 
-    def __call__(self, fn):
-        @functools.wraps(fn)
-        def log_decorated(*args, **kwargs):
-            try:
-                new_args, new_kwargs = remove_nd_array(*args, **kwargs)
-                if self.debug:
-                    self.logger.debug(
-                        "{0} - {1} - {2} - {3}".format(
-                            "Input to", get_function_name(fn), new_args, new_kwargs
-                        )
-                    )
-                else:
-                    self.logger.info("{}".format(get_function_name(fn)).upper())
-                result = fn(*args, **kwargs)
-                if self.debug:
-                    new_args, _ = (
-                        remove_nd_array(*result)
-                        if type(result) == tuple
-                        else remove_nd_array(*[result])
-                    )
-                    self.logger.debug(
-                        "{0} - {1} - {2}".format(
-                            "Output of", get_function_name(fn), new_args
-                        )
-                    )
-                return result
-            except KeyboardInterrupt as ex:
-                msg = "Function {function_name} raised {exception_class} ({exception_docstring}): {exception_message}".format(
-                    function_name=extract_function_name(),
-                    exception_class=ex.__class__,
-                    exception_docstring=ex.__doc__,
-                    exception_message=ex,
-                )
-                self.logger.debug("{0} - {1} - {2}".format(fn.__name__, args, kwargs))
-                self.logger.exception("Exception {0}".format(msg))
-                raise ex
-            except Exception as ex:
-                msg = "Function {function_name} raised {exception_class} ({exception_docstring}): {exception_message}".format(
-                    function_name=extract_function_name(),
-                    exception_class=ex.__class__,
-                    exception_docstring=ex.__doc__,
-                    exception_message=ex,
-                )
-                self.logger.debug("{0} - {1} - {2}".format(fn.__name__, args, kwargs))
-                self.logger.exception("Exception {0}".format(msg))
-                raise ex
+    @staticmethod
+    def get_logger():
+        return logging.getLogger("Dominus-log")
 
-        return log_decorated
+    @staticmethod
+    def create_channel_log(logger):
+        ch = logging.StreamHandler()
+        ch.setLevel(logging.INFO)
+        log_format = (
+            " \033[1;37m>>\033[0m \033[93m[%(asctime)s][%(name)s][%(levelname)s] \033[0;37m-"
+            "\033[0m %(message)s"
+        )
+        formatter = logging.Formatter(log_format)
+        ch.setFormatter(formatter)
+        logger.addHandler(ch)
+
+    @staticmethod
+    def create_time_rotated_log(log_path, exp_name, model, version, logger):
+        extensive_log_file = os.path.join(log_path, exp_name + "_extensive.log")
+        tfl = TimedRotatingFileHandler(extensive_log_file, when="D")
+        tfl.setLevel(logging.DEBUG)
+        rfl_format = logging.Formatter(
+            "%(asctime)s %(name)s : %(levelname)-5s : ExpName: {:5} : Model: {:5} : Version: {:5} : %(message)s".format(
+                exp_name, model, version
+            )
+        )
+        tfl.setFormatter(rfl_format)
+        logger.addHandler(tfl)
+
+    @staticmethod
+    def create_file_log(log_path, exp_name, model, version, logger):
+        log_file = os.path.join(log_path, exp_name + ".log")
+        fl = logging.FileHandler(log_file)
+        fl.setLevel(logging.INFO)
+        fl_format = logging.Formatter(
+            "%(asctime)s %(name)s : %(levelname)-5s : ExpName: {:5} : Model: {:5} : Version: {:5} : %(message)s".format(
+                exp_name, model, version
+            )
+        )
+        fl.setFormatter(fl_format)
+        logger.addHandler(fl)
+
+    def create_logger(self, folder_path, exp_name, model, version):
+        logger = self.get_logger()
+        logger.setLevel(logging.DEBUG)
+        log_path = make_directory(folder_path, "logs")
+        self.create_channel_log(logger)
+        self.create_file_log(log_path, exp_name, model, version, logger)
+        self.create_time_rotated_log(log_path, exp_name, model, version, logger)
+        logger.info("Experiment {} conducted on : {}".format(exp_name, get_date()))
+
+        sys.stdout.writelines = logger.info
+
+
+def exception(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        logger = DominusLogger.get_logger()
+        try:
+            result = func(*args, **kwargs)
+            return result
+        except KeyboardInterrupt as ex:
+            msg = "{detail} raised {exception_class} ({exception_docstring}): {exception_message}".format(
+                detail=extract_detail(),
+                exception_class=ex.__class__,
+                exception_docstring=ex.__doc__,
+                exception_message=ex,
+            )
+            msg_str = "Message : %s " % msg
+            logger.exception(msg_str)
+            raise ex
+        except Exception as ex:
+            msg = "{detail} raised {exception_class} ({exception_docstring}): {exception_message}".format(
+                detail=extract_detail(),
+                exception_class=ex.__class__,
+                exception_docstring=ex.__doc__,
+                exception_message=ex,
+            )
+            msg_str = "Message : %s " % msg
+            logger.exception(msg_str)
+            raise ex
+
+    return wrapper
+
+
+def info(func):
+    @functools.wraps(func)
+    @exception
+    def wrapper(*args, **kwargs):
+
+        logger = DominusLogger.get_logger()
+        class_name, func_name = get_details(func)
+        if class_name is not None:
+            data = (class_name, func_name)
+            msg_str = "%s with %s Loaded" % data
+        else:
+            msg_str = "%s Loaded" % func_name
+        logger.info(msg_str)
+        result = func(*args, **kwargs)
+        return result
+
+    return wrapper
+
+
+def debug(func):
+    @functools.wraps(func)
+    @exception
+    def wrapper(*args, **kwargs):
+
+        logger = DominusLogger.get_logger()
+        class_name, func_name = get_details(func)
+        func_args = args
+        func_kwargs = kwargs
+
+        if class_name is not None:
+            msg_str = "Class - {:2} : Function - {:3} : args - {:3} : kwargs - {}".format(
+                class_name, str(func_name), str(func_args), str(func_kwargs)
+            )
+        else:
+            msg_str = "Function - {:3} : args - {:3} : kwargs - {}".format(
+                func_name, str(func_args), str(func_kwargs)
+            )
+
+        logger.debug(msg_str)
+        result = func(*args, **kwargs)
+        if result is not None:
+            msg_str = "Function - {:3} : Result - {}".format(func_name, result)
+            logger.debug(msg_str)
+
+        return result
+
+    return wrapper

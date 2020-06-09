@@ -14,7 +14,7 @@ from ml.commons.utils.image_util import (
 from ml.commons import augmentator, normalizer
 from abc import ABCMeta, abstractmethod
 
-from ml.pt.logger import PtLogger
+from ml.pt.logger import info
 
 
 class BaseDataSetPt(Dataset, metaclass=ABCMeta):
@@ -102,7 +102,7 @@ class BaseDataSetPt(Dataset, metaclass=ABCMeta):
         else:
             raise NotImplementedError
 
-    @PtLogger()
+    @info
     def load_transformation(self, transformation_param):
         transform_type = list(transformation_param.keys())[0]
         transformation_to_perform = list(transformation_param.values())[0]
@@ -133,7 +133,7 @@ class BaseDataSetPt(Dataset, metaclass=ABCMeta):
         return train_transformation
 
     @staticmethod
-    @PtLogger()
+    @info
     def load_normalization(normalization_name):
         normalization = getattr(normalizer, normalization_name)()
         return normalization

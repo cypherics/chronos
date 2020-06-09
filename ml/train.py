@@ -3,7 +3,7 @@ import os
 from ml.pt.factory import PtPlugin
 from ml.pt.runner import PtRunner
 from config.train_config import TrainConfig
-from ml.pt.logger import create_logger, PtLogger
+from ml.pt.logger import info, DominusLogger
 from utils.system_printer import SystemPrinter
 
 CONFIG_RESTRICTION = ["DATASET", "MODEL", "TRAIN"]
@@ -74,13 +74,15 @@ class Train:
         save_path = os.path.join(config.training_path, config.version)
 
         config.write_config(save_path)
-        create_logger(config.root_folder, config.experiment_name)
+        DominusLogger().create_logger(
+            config.root_folder, config.experiment_name, config.model, config.version
+        )
         plugin = PtPlugin(config)
         self.load_plugin(plugin, config)
         runner = PtRunner()
         runner.training(self, config)
 
-    @PtLogger()
+    @info
     def load_plugin(self, plugin, config):
         self.model = plugin.factory.create_network(config.model, config.model_param)
         SystemPrinter.sys_print(

@@ -7,7 +7,8 @@ from config.config import PtConfig
 from utils.directory_handler import (
     create_version,
     level_2_folder_creation,
-    create_weights_path,
+    create_state_path,
+    create_chk_path,
 )
 
 
@@ -25,15 +26,22 @@ class TrainConfig(PtConfig):
             additional_config = Properties()
             additional_config["root_folder"], _, additional_config[
                 "training_path"
-            ] = level_2_folder_creation(self.experiment_name, self.model, "training")
+            ] = level_2_folder_creation(self.experiment_name, "train", self.model)
             additional_config["Version"] = create_version(
                 additional_config["training_path"]
             )
 
-            additional_config["chk_path"], additional_config[
-                "best_chk_path"
-            ] = create_weights_path(
+            additional_config["default_state"], additional_config[
+                "best_state"
+            ] = create_state_path(
                 additional_config["training_path"], additional_config["Version"]
+            )
+
+            additional_config["chk_pth"] = create_chk_path(
+                additional_config["training_path"],
+                self.experiment_name,
+                self.model,
+                additional_config["Version"],
             )
 
             return additional_config
@@ -119,9 +127,13 @@ class TrainConfig(PtConfig):
         return self.get_additional_property("Version")
 
     @property
-    def chk_path(self):
-        return self.get_additional_property("chk_path")
+    def default_state(self):
+        return self.get_additional_property("default_state")
 
     @property
-    def best_chk_path(self):
-        return self.get_additional_property("best_chk_path")
+    def best_state(self):
+        return self.get_additional_property("best_state")
+
+    @property
+    def chk_pth(self):
+        return self.get_additional_property("chk_pth")
