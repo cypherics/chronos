@@ -1,5 +1,4 @@
 import sys
-import traceback
 import os
 import functools
 import logging
@@ -7,30 +6,7 @@ from logging.handlers import TimedRotatingFileHandler
 
 from utils.date_time_utility import get_date
 from utils.directory_handler import make_directory
-
-
-def extract_detail():
-    """Extracts failing function name from Traceback
-    by Alex Martelli
-    http://stackoverflow.com/questions/2380073/\
-    how-to-identify-what-function-call-raise-an-exception-in-python
-    """
-    tb = sys.exc_info()[-1]
-    stk = traceback.extract_tb(tb, -1)[0]
-    return "{} in {} line num {} on line {} ".format(
-        stk.name, stk.filename, stk.lineno, stk.line
-    )
-
-
-def get_details(fn):
-    class_name = vars(sys.modules[fn.__module__])[
-        fn.__qualname__.split(".")[0]
-    ].__name__
-    fn_name = fn.__name__
-    if class_name == fn_name:
-        return None, fn_name
-    else:
-        return class_name, fn_name
+from utils.function_util import extract_detail, get_details
 
 
 class DominusLogger:
@@ -54,38 +30,36 @@ class DominusLogger:
         logger.addHandler(ch)
 
     @staticmethod
-    def create_time_rotated_log(log_path, exp_name, model, version, logger):
+    def create_time_rotated_log(log_path, plugin, exp_name, model, version, logger):
         extensive_log_file = os.path.join(log_path, exp_name + "_extensive.log")
         tfl = TimedRotatingFileHandler(extensive_log_file, when="D")
         tfl.setLevel(logging.DEBUG)
         rfl_format = logging.Formatter(
-            "%(asctime)s %(name)s : %(levelname)-5s : ExpName: {:5} : Model: {:5} : Version: {:5} : %(message)s".format(
-                exp_name, model, version
-            )
+            "%(asctime)s %(name)s : %(levelname)-5s : Plugin: {:5} : ExpName: {:5} : Model: {:5} : Version: {:5} "
+            ": %(message)s".format(plugin, exp_name, model, version)
         )
         tfl.setFormatter(rfl_format)
         logger.addHandler(tfl)
 
     @staticmethod
-    def create_file_log(log_path, exp_name, model, version, logger):
+    def create_file_log(log_path, plugin, exp_name, model, version, logger):
         log_file = os.path.join(log_path, exp_name + ".log")
         fl = logging.FileHandler(log_file)
         fl.setLevel(logging.INFO)
         fl_format = logging.Formatter(
-            "%(asctime)s %(name)s : %(levelname)-5s : ExpName: {:5} : Model: {:5} : Version: {:5} : %(message)s".format(
-                exp_name, model, version
-            )
+            "%(asctime)s %(name)s : %(levelname)-5s : Plugin: {:5} : ExpName: {:5} : Model: {:5} : Version: {:5} "
+            ": %(message)s".format(plugin, exp_name, model, version)
         )
         fl.setFormatter(fl_format)
         logger.addHandler(fl)
 
-    def create_logger(self, folder_path, exp_name, model, version):
+    def create_logger(self, folder_path, plugin, exp_name, model, version):
         logger = self.get_logger()
         logger.setLevel(logging.DEBUG)
         log_path = make_directory(folder_path, "logs")
         self.create_channel_log(logger)
-        self.create_file_log(log_path, exp_name, model, version, logger)
-        self.create_time_rotated_log(log_path, exp_name, model, version, logger)
+        self.create_file_log(log_path, plugin, exp_name, model, version, logger)
+        self.create_time_rotated_log(log_path, plugin, exp_name, model, version, logger)
         logger.info("Experiment {} conducted on : {}".format(exp_name, get_date()))
 
         sys.stdout.writelines = logger.info
@@ -131,9 +105,9 @@ def info(func):
         class_name, func_name = get_details(func)
         if class_name is not None:
             data = (class_name, func_name)
-            msg_str = "%s with %s Loaded" % data
+            msg_str = "LOADED %s with %s" % data
         else:
-            msg_str = "%s Loaded" % func_name
+            msg_str = "LOADED %s" % func_name
         logger.info(msg_str)
         result = func(*args, **kwargs)
         return result

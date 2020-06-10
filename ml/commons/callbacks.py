@@ -13,6 +13,7 @@ from ml.pt.logger import debug, DominusLogger
 from ml.commons.utils.tensor_util import to_tensor
 from utils import date_time_utility
 from utils.directory_handler import make_directory
+from utils.function_util import is_overridden_func
 from utils.system_printer import SystemPrinter
 
 with warnings.catch_warnings():
@@ -40,45 +41,89 @@ class CallbackList(object):
         logs = logs or {}
         for callback in self.callbacks:
             logger.debug("On Epoch Begin {}".format(callback.__class__.__name__))
+            if not is_overridden_func(callback.on_epoch_begin):
+                logger.debug(
+                    "Nothing Registered On Epoch Begin {}".format(
+                        callback.__class__.__name__
+                    )
+                )
             callback.on_epoch_begin(epoch, logs)
 
     def on_epoch_end(self, epoch, logs=None):
         logs = logs or {}
         for callback in self.callbacks:
             logger.debug("On Epoch End {}".format(callback.__class__.__name__))
+            if not is_overridden_func(callback.on_epoch_end):
+                logger.debug(
+                    "Nothing Registered On Epoch End {}".format(
+                        callback.__class__.__name__
+                    )
+                )
             callback.on_epoch_end(epoch, logs)
 
     def on_batch_begin(self, batch, logs=None):
         for callback in self.callbacks:
             logger.debug("On Batch Begin {}".format(callback.__class__.__name__))
+            if not is_overridden_func(callback.on_batch_begin):
+                logger.debug(
+                    "Nothing Registered On Batch Begin {}".format(
+                        callback.__class__.__name__
+                    )
+                )
             callback.on_batch_begin(batch, logs)
 
     def on_batch_end(self, batch, logs=None):
 
         for callback in self.callbacks:
             logger.debug("On Batch End {}".format(callback.__class__.__name__))
+            if not is_overridden_func(callback.on_batch_end):
+                logger.debug(
+                    "Nothing Registered On Batch End {}".format(
+                        callback.__class__.__name__
+                    )
+                )
             callback.on_batch_end(batch, logs)
 
     def on_begin(self, logs=None):
         logs = logs or {}
         for callback in self.callbacks:
             logger.debug("On Begin {}".format(callback.__class__.__name__))
+            if not is_overridden_func(callback.on_begin):
+                logger.debug(
+                    "Nothing Registered On Begin {}".format(callback.__class__.__name__)
+                )
             callback.on_begin(logs)
 
     def on_end(self, logs=None):
         logs = logs or {}
         for callback in self.callbacks:
             logger.debug("On End {}".format(callback.__class__.__name__))
+            if not is_overridden_func(callback.on_end):
+                logger.debug(
+                    "Nothing Registered On End {}".format(callback.__class__.__name__)
+                )
             callback.on_end(logs)
 
     def interruption(self, logs=None):
         logs = logs or {}
         for callback in self.callbacks:
             logger.debug("Interruption {}".format(callback.__class__.__name__))
+            if not is_overridden_func(callback.interruption):
+                logger.debug(
+                    "Nothing Registered On Interruption {}".format(
+                        callback.__class__.__name__
+                    )
+                )
             callback.interruption(logs)
 
     def update_params(self, params):
         for callback in self.callbacks:
+            if not is_overridden_func(callback.update_params):
+                logger.debug(
+                    "Nothing Registered On Update param {}".format(
+                        callback.__class__.__name__
+                    )
+                )
             callback.update_params(params)
 
     def __iter__(self):

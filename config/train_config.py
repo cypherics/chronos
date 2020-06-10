@@ -13,8 +13,8 @@ from utils.directory_handler import (
 
 
 class TrainConfig(PtConfig):
-    def __init__(self, config_path, restriction):
-        super().__init__(config_path, restriction)
+    def __init__(self, config_path, restriction, plugin):
+        super().__init__(config_path, restriction, plugin)
         self.additional_config = self.generate_additional_config(
             os.path.dirname(config_path)
         )
@@ -57,10 +57,6 @@ class TrainConfig(PtConfig):
     @property
     def experiment_name(self):
         return self.get_property("EXP_NAME")
-
-    @property
-    def problem_type(self):
-        return self.get_property("ML_TYPE")
 
     @property
     def normalization(self):

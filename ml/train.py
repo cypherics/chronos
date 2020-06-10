@@ -10,7 +10,7 @@ CONFIG_RESTRICTION = ["DATASET", "MODEL", "TRAIN"]
 
 
 class Train:
-    def __init__(self, config_path):
+    def __init__(self, plugin, config_path):
         self.config_path = config_path
         self._train_data_loader, self._val_data_loader, self._test_data_loader = (
             None,
@@ -20,6 +20,7 @@ class Train:
         self._model = None
         self._criterion = None
         self._evaluator = None
+        self._plugin = plugin
 
     @property
     def model(self):
@@ -70,12 +71,16 @@ class Train:
         self._test_data_loader = value
 
     def run(self):
-        config = TrainConfig(self.config_path, CONFIG_RESTRICTION)
+        config = TrainConfig(self.config_path, CONFIG_RESTRICTION, self._plugin)
         save_path = os.path.join(config.training_path, config.version)
 
         config.write_config(save_path)
         DominusLogger().create_logger(
-            config.root_folder, config.experiment_name, config.model, config.version
+            config.root_folder,
+            config.plugin,
+            config.experiment_name,
+            config.model,
+            config.version,
         )
         plugin = PtPlugin(config)
         self.load_plugin(plugin, config)

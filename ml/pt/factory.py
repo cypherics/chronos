@@ -13,14 +13,14 @@ class PtPlugin:
     @info
     def create_factory(self):
 
-        plugin_name = self.config.problem_type
+        plugin_name = self.config.plugin
         plugin = os.path.join("ml/ml_type/", plugin_name)
 
         file = os.path.join(os.curdir, plugin, plugin_name + "_factory.py")
 
         import importlib.util
 
-        spec = importlib.util.spec_from_file_location(self.config.problem_type, file)
+        spec = importlib.util.spec_from_file_location(plugin_name, file)
         foo = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(foo)
 

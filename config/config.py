@@ -6,11 +6,16 @@ from pyjavaproperties import Properties
 
 
 class PtConfig(object):
-    def __init__(self, config_path, restriction):
+    def __init__(self, config_path, restriction, plugin):
         self._config = self.read_config_yaml(config_path)
         self._config_section = restriction
         self._run_config = self.simplify_run_config()
         self._additional_config = Properties()
+        self._plugin = plugin
+
+    @property
+    def plugin(self):
+        return self._plugin
 
     @property
     def config_restriction(self):
