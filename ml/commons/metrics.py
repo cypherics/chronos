@@ -5,6 +5,7 @@ from torch import Tensor
 
 from ml.commons.utils.tensor_util import convert_tensor_to_numpy
 from ml.pt.logger import debug
+from utils.dictionary_set import handle_dictionary
 from utils.system_printer import SystemPrinter
 
 EPSILON = 1e-11
@@ -21,6 +22,15 @@ def to_binary(prediction, cutoff=0.40):
     prediction[prediction >= cutoff] = 1
     prediction[prediction < cutoff] = 0
     return prediction
+
+
+def compute_mean_metric(metric: dict):
+    mean_metric = dict()
+    for key, value in metric.items():
+        assert type(value) is list
+        mean_value = np.mean(value)
+        mean_metric = handle_dictionary(mean_metric, key, mean_value)
+    return mean_metric
 
 
 def compute_metric(prediction, ground_truth):

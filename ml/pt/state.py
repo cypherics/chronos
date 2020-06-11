@@ -5,7 +5,7 @@ from ml.commons.utils.model_util import (
     set_optimizer_state,
     load_parallel_model,
 )
-from ml.pt.logger import debug, DominusLogger
+from ml.pt.logger import DominusLogger, info
 from utils.system_printer import SystemPrinter
 
 logger = DominusLogger.get_logger()
@@ -83,10 +83,10 @@ class PtState:
             else "NA",
         }
 
-    @debug
+    @info
     def extract_state(self, pth):
         if os.path.exists(pth):
-            logger.debug("Loading Existing State {}".format(pth))
+            SystemPrinter.sys_print("\t Loading Existing State {}".format(pth))
             ongoing_state = get_current_state(pth)
             if self.check_key_and_none(ongoing_state, "model"):
                 self.model = set_model_state(self.model, ongoing_state["model"])
@@ -117,6 +117,7 @@ class PtState:
                 logger.debug("Existing Best Valid Loss {}".format(self.bst_vld_loss))
 
         else:
+            SystemPrinter.sys_print("\t Loading Default State")
             self.model = load_parallel_model(self.model)
 
     @staticmethod

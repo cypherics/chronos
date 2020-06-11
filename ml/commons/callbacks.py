@@ -1,4 +1,5 @@
 import os
+import random
 import shutil
 
 import torch
@@ -8,10 +9,11 @@ import time
 import numpy as np
 import cv2
 
-from ml.commons.utils.model_util import adjust_model
+from ml.commons.utils.model_util import adjust_model, get_prediction_as_per_instance
 from ml.pt.logger import debug, DominusLogger
-from ml.commons.utils.tensor_util import to_tensor
+from ml.commons.utils.tensor_util import to_tensor, cuda_variable
 from utils import date_time_utility
+from utils.dictionary_set import handle_dictionary
 from utils.directory_handler import make_directory
 from utils.function_util import is_overridden_func
 from utils.system_printer import SystemPrinter
@@ -302,3 +304,34 @@ class TrainChkCallback(Callback):
         logger.debug(
             "Successful on interruption {}, Chk Saved".format(self.__class__.__name__)
         )
+
+
+class TestCallback(Callback):
+    @debug
+    def __init__(self, test_loader, evaluator, pth):
+        super().__init__()
+        self.test_loader = test_loader
+        self.evaluator = evaluator
+        self.prediction_save_callback = PredictionSaveCallback(pth)
+
+    def on_batch_end(self, batch, logs=None):
+        model = logs["model"]
+        model.eval()
+        if random.random() < 0.10:
+            try:
+                for i, (inputs, file_path) in enumerate(self.test_loader):
+
+                    image = cuda_variable(inputs)
+                    prediction = model(image)
+                    prediction = get_prediction_as_per_instance(prediction)
+                    prediction = self.evaluator.handle_prediction(prediction)
+                    prediction = self.evaluator.create_prediction_grid(inputs, prediction)
+                    logs = handle_dictionary(
+                        logs, "plt_img", {"img": prediction, "tag": "Test"}
+                    )
+                    self.prediction_save_callback.on_batch_end(batch, logs)
+                    break
+            except Exception as ex:
+                logger.exception("Skipped Exception in {}".format(self.__class__.__name__))
+                logger.exception("Exception {}".format(ex))
+                pass

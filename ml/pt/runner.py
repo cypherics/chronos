@@ -6,16 +6,11 @@ import torch
 
 import tqdm
 
-from ml.commons.callbacks import (
-    CallbackList,
-    TensorBoardCallback,
-    TrainStateCallback,
-    SchedulerCallback,
-    TimeCallback,
-    PredictionSaveCallback,
-    TrainChkCallback,
-)
+from ml.commons.callbacks import CallbackList, SchedulerCallback
+from ml.commons.metrics import compute_metric, compute_mean_metric
 from ml.commons.utils import tensor_util
+from ml.commons.utils.model_util import get_prediction_as_per_instance
+from ml.commons.utils.tensor_util import cuda_variable
 from ml.pt.state import PtState
 from utils.dictionary_set import dict_to_string, handle_dictionary
 from ml.pt.logger import info, DominusLogger
@@ -39,19 +34,20 @@ class PtRunner(PtState):
         )
 
     @info
-    def training(self, instance, config, training_callbacks=None):
+    def training(self, instance, config, training_callbacks: CallbackList):
+
         self.model = instance.model
         self.optimizer = self.load_optimizer(self.model, config)
-
-        self.extract_state(config.default_state)
         train_loader, val_loader, test_loader = (
             instance.train_data_loader,
             instance.val_data_loader,
             instance.test_data_loader,
         )
-
         criterion = instance.criterion
-        evaluator = instance.evaluator
+        batch_size = config.batch_size
+        epochs = config.n_epochs
+
+        self.extract_state(config.default_state)
 
         scheduler = get_scheduler(
             config.scheduler,
@@ -61,90 +57,41 @@ class PtRunner(PtState):
             }
         )
 
-        callbacks = (
-            CallbackList()
-            if training_callbacks is None
-            else CallbackList(training_callbacks)
-        )
-        callbacks.append(
-            TensorBoardCallback(os.path.join(config.training_path, config.version))
-        )
-        callbacks.append(TrainStateCallback(config.default_state, config.best_state))
-        callbacks.append(TrainChkCallback(config.chk_pth))
-        callbacks.append(SchedulerCallback(scheduler))
-        callbacks.append(TimeCallback())
-        callbacks.append(
-            PredictionSaveCallback(os.path.join(config.training_path, config.version))
-        )
+        training_callbacks.append(SchedulerCallback(scheduler))
+        training_callbacks.on_begin()
 
-        report_each = 100
-
-        batch_size = config.batch_size
-        epochs = config.n_epochs
-        start_epoch = self.starting_epoch
-
-        callbacks.on_begin()
-
-        for ongoing_epoch in range(start_epoch, epochs):
+        begin_epoch = self.starting_epoch
+        for ongoing_epoch in range(begin_epoch, epochs):
             epoch_logs = dict()
             random.seed()
 
             self.starting_epoch = ongoing_epoch
             self.model.train()
-
-            tq = tqdm.tqdm(total=(len(train_loader) * batch_size))
             lr = self.optimizer.param_groups[0]["lr"]
-            logger.debug("Setting Learning rate : {}".format(lr))
 
-            epoch_logs = handle_dictionary(
-                epoch_logs, "plt_lr", {"data": lr, "tag": "LR/Epoch"}
+            progress_bar = tqdm.tqdm(total=(len(train_loader) * batch_size))
+            progress_bar.set_description(
+                "Epoch {}, lr {}".format(self.starting_epoch, lr)
             )
 
-            tq.set_description("Epoch {}, lr {}".format(self.starting_epoch, lr))
-            losses = []
-
-            tl = train_loader
             try:
-                mean_loss = 0
-                for i, input_data in enumerate(tl):
-                    batch_logs = dict()
-                    callbacks.on_batch_begin(self.step, logs=batch_logs)
-                    if not self.model.training:
-                        self.model.train()
-
-                    input_data = tensor_util.cuda_variable(input_data)
-
-                    outputs = self.model(input_data)
-                    calculated_loss = criterion(outputs=outputs, **input_data)
-                    self.optimizer.zero_grad()
-                    calculated_loss.backward()
-                    self.optimizer.step()
-
-                    tq.update(batch_size)
-                    losses.append(calculated_loss.item())
-                    mean_loss = np.mean(losses[-report_each:])
-                    tq.set_postfix(loss="{:.5f}".format(mean_loss))
-                    batch_logs = handle_dictionary(
-                        batch_logs, "plt_lr", {"data": mean_loss, "tag": "Loss/Step"}
-                    )
-                    if i and i % 20 == 0:
-                        predicted_images = evaluator.perform_test(
-                            self.model, test_loader
-                        )
-
-                        batch_logs = handle_dictionary(
-                            batch_logs,
-                            "plt_img",
-                            {"img": predicted_images, "tag": "Test"},
-                        )
-                    callbacks.on_batch_end(self.step, logs=batch_logs)
-                    self.step += 1
-                tq.close()
-
-                valid_metrics = evaluator.perform_validation(
-                    model=self.model, loss_function=criterion, valid_loader=val_loader
+                logger.debug("Setting Learning rate : {}".format(lr))
+                epoch_logs = handle_dictionary(
+                    epoch_logs, "plt_lr", {"data": lr, "tag": "LR/Epoch"}
                 )
+
+                mean_loss, progress_bar = self.state_train(
+                    train_loader,
+                    criterion,
+                    training_callbacks,
+                    batch_size,
+                    progress_bar,
+                )
+                progress_bar.close()
+
+                valid_metrics = self.state_validate(criterion, val_loader)
                 valid_loss = valid_metrics["valid_loss"]
+
                 epoch_logs = handle_dictionary(epoch_logs, "valid_loss", valid_loss)
                 logger.debug(
                     "Train Loss {}, Valid Loss {}".format(mean_loss, valid_loss)
@@ -173,13 +120,13 @@ class PtRunner(PtState):
                 if (self.bst_vld_loss is None) or (valid_loss < self.bst_vld_loss):
                     self.bst_vld_loss = valid_loss
 
-                callbacks.on_epoch_end(
+                training_callbacks.on_epoch_end(
                     self.starting_epoch, logs={**epoch_logs, **self.state_obj_epoch}
                 )
 
             except KeyboardInterrupt:
-                tq.close()
-                callbacks.interruption(
+                progress_bar.close()
+                training_callbacks.interruption(
                     logs={**epoch_logs, **self.state_obj_interruption}
                 )
                 SystemPrinter.sys_print(
@@ -188,8 +135,81 @@ class PtRunner(PtState):
                 raise KeyboardInterrupt
 
             except Exception as ex:
-                tq.close()
+                progress_bar.close()
                 raise ex
 
         SystemPrinter.sys_print("Training Complete")
-        callbacks.on_end()
+        training_callbacks.on_end()
+
+    def state_train(self, train_loader, criterion, callbacks, batch_size, progress_bar):
+        report_each = 100
+        batch_loss = []
+        mean_loss = 0
+        for batch_iterator, input_data in enumerate(train_loader):
+            batch_logs = dict()
+            callbacks.on_batch_begin(self.step, logs=batch_logs)
+            if not self.model.training:
+                self.model.train()
+
+            input_data = tensor_util.cuda_variable(input_data)
+
+            outputs = self.model(input_data)
+            calculated_loss = criterion(outputs=outputs, **input_data)
+            self.optimizer.zero_grad()
+            calculated_loss.backward()
+            self.optimizer.step()
+
+            batch_loss.append(calculated_loss.item())
+            mean_loss = np.mean(batch_loss[-report_each:])
+            batch_logs = handle_dictionary(
+                batch_logs, "plt_lr", {"data": mean_loss, "tag": "Loss/Step"}
+            )
+            batch_logs = handle_dictionary(batch_logs, "model", self.model)
+            callbacks.on_batch_end(self.step, logs=batch_logs)
+            progress_bar.update(batch_size)
+            progress_bar.set_postfix(loss="{:.5f}".format(mean_loss))
+            self.step += 1
+        return mean_loss, progress_bar
+
+    @torch.no_grad()
+    def state_validate(self, criterion, valid_loader):
+        logger.debug("Validation In Progress")
+        self.model.eval()
+        losses = []
+        metric = dict()
+        ongoing_count = 1
+        total_count = len(valid_loader)
+        sys_print = SystemPrinter()
+        for input_data in valid_loader:
+            sys_print.dynamic_print(
+                tag=str("Validation"),
+                data="{}/{} -> {}".format(
+                    ongoing_count,
+                    total_count,
+                    sys_print.compute_eta(ongoing_count, total_count),
+                ),
+            )
+
+            ongoing_count += 1
+            input_data = cuda_variable(input_data)
+
+            targets = input_data["label"]
+
+            input_data = cuda_variable(input_data)
+            outputs = self.model(input_data)
+            loss = criterion(outputs, **input_data)
+
+            losses.append(loss.item())
+            outputs = get_prediction_as_per_instance(outputs)
+
+            met = compute_metric(ground_truth=targets, prediction=outputs)
+            if met is not None:
+                for key, value in met.items():
+                    metric = handle_dictionary(metric, key, value)
+
+        valid_loss = np.mean(losses)
+        valid_loss = {"valid_loss": valid_loss}
+
+        validation_metric = compute_mean_metric(metric)
+        metrics = {**valid_loss, **validation_metric}
+        return metrics

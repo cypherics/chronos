@@ -56,3 +56,13 @@ def adjust_model(state):
         for key, value in state.items()
     }
     return model
+
+
+def get_prediction_as_per_instance(outputs):
+    if isinstance(outputs, dict):
+        assert "final_image" in outputs, "while passing image use key-final_image"
+        return outputs["final_image"]
+    elif isinstance(outputs, torch.Tensor):
+        return outputs
+    else:
+        raise NotImplementedError

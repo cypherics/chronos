@@ -1,5 +1,13 @@
 import os
 
+from ml.commons.callbacks import (
+    CallbackList,
+    TensorBoardCallback,
+    TrainStateCallback,
+    TrainChkCallback,
+    TimeCallback,
+    TestCallback,
+)
 from ml.pt.factory import PtPlugin
 from ml.pt.runner import PtRunner
 from config.train_config import TrainConfig
@@ -84,8 +92,9 @@ class Train:
         )
         plugin = PtPlugin(config)
         self.load_plugin(plugin, config)
+        callbacks = self.register_callbacks(config)
         runner = PtRunner()
-        runner.training(self, config)
+        runner.training(self, config, callbacks)
 
     @info
     def load_plugin(self, plugin, config):
@@ -103,3 +112,22 @@ class Train:
         self.train_data_loader, self.val_data_loader, self.test_data_loader = (
             plugin.factory.create_data_set()
         )
+
+    @info
+    def register_callbacks(self, config):
+        callbacks = CallbackList()
+        callbacks.append(
+            TensorBoardCallback(os.path.join(config.training_path, config.version))
+        )
+        callbacks.append(TrainStateCallback(config.default_state, config.best_state))
+        callbacks.append(TrainChkCallback(config.chk_pth))
+        callbacks.append(TimeCallback())
+        if self.evaluator is not None:
+            callbacks.append(
+                TestCallback(
+                    test_loader=self.test_data_loader,
+                    evaluator=self.evaluator,
+                    pth=os.path.join(config.training_path, config.version),
+                )
+            )
+        return callbacks
