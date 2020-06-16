@@ -1,7 +1,7 @@
 import random
-from ml.pt.logger import DominusLogger
+from ml.pt.logger import ChronosLogger
 
-logger = DominusLogger.get_logger()
+logger = ChronosLogger.get_logger()
 
 
 class DualCompose:

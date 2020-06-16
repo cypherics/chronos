@@ -13,11 +13,11 @@ from ml.commons.utils.model_util import get_prediction_as_per_instance
 from ml.commons.utils.tensor_util import cuda_variable
 from ml.pt.state import PtState
 from utils.dictionary_set import dict_to_string, handle_dictionary
-from ml.pt.logger import info, DominusLogger
+from ml.pt.logger import info, ChronosLogger
 from ml.commons.scheduler import get_scheduler
 from utils.system_printer import SystemPrinter
 
-logger = DominusLogger.get_logger()
+logger = ChronosLogger.get_logger()
 
 
 class PtRunner(PtState):
@@ -47,17 +47,18 @@ class PtRunner(PtState):
         batch_size = config.batch_size
         epochs = config.n_epochs
 
-        self.extract_state(config.default_state)
+        self.initialization(config.default_state)
 
-        scheduler = get_scheduler(
-            config.scheduler,
-            **{
-                **config.scheduler_param,
-                **{"optimizer": self.optimizer, "epoch": self.starting_epoch},
-            }
-        )
+        if config.scheduler is not None:
+            scheduler = get_scheduler(
+                config.scheduler,
+                **{
+                    **config.scheduler_param,
+                    **{"optimizer": self.optimizer, "epoch": self.starting_epoch},
+                }
+            )
 
-        training_callbacks.append(SchedulerCallback(scheduler))
+            training_callbacks.append(SchedulerCallback(scheduler))
         training_callbacks.on_begin()
 
         begin_epoch = self.starting_epoch

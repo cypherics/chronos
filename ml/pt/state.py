@@ -5,10 +5,10 @@ from ml.commons.utils.model_util import (
     set_optimizer_state,
     load_parallel_model,
 )
-from ml.pt.logger import DominusLogger, info
+from ml.pt.logger import ChronosLogger, info
 from utils.system_printer import SystemPrinter
 
-logger = DominusLogger.get_logger()
+logger = ChronosLogger.get_logger()
 
 
 class PtState:
@@ -84,7 +84,7 @@ class PtState:
         }
 
     @info
-    def extract_state(self, pth):
+    def initialization(self, pth):
         if os.path.exists(pth):
             SystemPrinter.sys_print("\t Loading Existing State {}".format(pth))
             ongoing_state = get_current_state(pth)

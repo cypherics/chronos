@@ -1,8 +1,8 @@
 import torch
 
-from ml.pt.logger import debug, DominusLogger
+from ml.pt.logger import debug, ChronosLogger
 
-logger = DominusLogger.get_logger()
+logger = ChronosLogger.get_logger()
 
 
 @debug

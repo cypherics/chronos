@@ -2,9 +2,9 @@ import random
 import cv2
 import numpy as np
 
-from ml.pt.logger import debug, DominusLogger
+from ml.pt.logger import debug, ChronosLogger
 
-logger = DominusLogger.get_logger()
+logger = ChronosLogger.get_logger()
 
 
 def clip(img, dtype, maxval):

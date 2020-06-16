@@ -9,13 +9,13 @@ from utils.directory_handler import make_directory
 from utils.function_util import extract_detail, get_details
 
 
-class DominusLogger:
+class ChronosLogger:
     def __init__(self):
         pass
 
     @staticmethod
     def get_logger():
-        return logging.getLogger("Dominus-log")
+        return logging.getLogger("Chronos-log")
 
     @staticmethod
     def create_channel_log(logger):
@@ -68,7 +68,7 @@ class DominusLogger:
 def exception(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        logger = DominusLogger.get_logger()
+        logger = ChronosLogger.get_logger()
         try:
             result = func(*args, **kwargs)
             return result
@@ -101,7 +101,7 @@ def info(func):
     @exception
     def wrapper(*args, **kwargs):
 
-        logger = DominusLogger.get_logger()
+        logger = ChronosLogger.get_logger()
         class_name, func_name = get_details(func)
         if class_name is not None:
             data = (class_name, func_name)
@@ -120,7 +120,7 @@ def debug(func):
     @exception
     def wrapper(*args, **kwargs):
 
-        logger = DominusLogger.get_logger()
+        logger = ChronosLogger.get_logger()
         class_name, func_name = get_details(func)
         func_args = args
         func_kwargs = kwargs

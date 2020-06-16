@@ -11,7 +11,7 @@ from ml.commons.callbacks import (
 from ml.pt.factory import PtPlugin
 from ml.pt.runner import PtRunner
 from config.train_config import TrainConfig
-from ml.pt.logger import info, DominusLogger
+from ml.pt.logger import info, ChronosLogger
 from utils.system_printer import SystemPrinter
 
 CONFIG_RESTRICTION = ["DATASET", "MODEL", "TRAIN"]
@@ -83,7 +83,7 @@ class Train:
         save_path = os.path.join(config.training_path, config.version)
 
         config.write_config(save_path)
-        DominusLogger().create_logger(
+        ChronosLogger().create_logger(
             config.root_folder,
             config.plugin,
             config.experiment_name,

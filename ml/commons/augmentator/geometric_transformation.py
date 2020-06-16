@@ -7,9 +7,9 @@ from ml.commons.utils.image_util import (
     crop_image,
     perform_scale,
 )
-from ml.pt.logger import debug, DominusLogger
+from ml.pt.logger import debug, ChronosLogger
 
-logger = DominusLogger.get_logger()
+logger = ChronosLogger.get_logger()
 
 
 class MirrorCrop:

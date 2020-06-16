@@ -94,7 +94,7 @@ class PtConfig(object):
 
     @staticmethod
     def get_properties_file(config_path):
-        properties_file = os.path.join(config_path, "dominus.properties")
+        properties_file = os.path.join(config_path, "chronos.properties")
         return properties_file
 
     def write_config(self, save_path):

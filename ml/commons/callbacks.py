@@ -10,7 +10,7 @@ import numpy as np
 import cv2
 
 from ml.commons.utils.model_util import adjust_model, get_prediction_as_per_instance
-from ml.pt.logger import debug, DominusLogger
+from ml.pt.logger import debug, ChronosLogger
 from ml.commons.utils.tensor_util import to_tensor, cuda_variable
 from utils import date_time_utility
 from utils.dictionary_set import handle_dictionary
@@ -22,7 +22,7 @@ with warnings.catch_warnings():
     warnings.filterwarnings("ignore")
     from torch.utils.tensorboard import SummaryWriter
 
-logger = DominusLogger.get_logger()
+logger = ChronosLogger.get_logger()
 
 
 class CallbackList(object):
@@ -325,13 +325,17 @@ class TestCallback(Callback):
                     prediction = model(image)
                     prediction = get_prediction_as_per_instance(prediction)
                     prediction = self.evaluator.handle_prediction(prediction)
-                    prediction = self.evaluator.create_prediction_grid(inputs, prediction)
+                    prediction = self.evaluator.create_prediction_grid(
+                        inputs, prediction
+                    )
                     logs = handle_dictionary(
                         logs, "plt_img", {"img": prediction, "tag": "Test"}
                     )
                     self.prediction_save_callback.on_batch_end(batch, logs)
                     break
             except Exception as ex:
-                logger.exception("Skipped Exception in {}".format(self.__class__.__name__))
+                logger.exception(
+                    "Skipped Exception in {}".format(self.__class__.__name__)
+                )
                 logger.exception("Exception {}".format(ex))
                 pass

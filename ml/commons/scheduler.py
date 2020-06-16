@@ -1,11 +1,12 @@
+import math
 import sys
 
 import torch.optim.lr_scheduler as lr_scheduler
 from torch.optim.lr_scheduler import _LRScheduler
 
-from ml.pt.logger import debug, DominusLogger
+from ml.pt.logger import debug, ChronosLogger
 
-logger = DominusLogger.get_logger()
+logger = ChronosLogger.get_logger()
 
 
 class PolyLrDecay(_LRScheduler):
