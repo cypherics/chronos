@@ -1,7 +1,7 @@
 import sys
 import time
 
-from utils.date_time_utility import get_time
+from utils.date_time import get_time
 
 
 class SystemPrinter:

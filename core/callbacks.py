@@ -11,9 +11,9 @@ import cv2
 from core.utils.model_util import adjust_model, get_prediction_as_per_instance
 from core.logger import debug, ChronosLogger
 from core.utils.tensor_util import cuda_variable
-from utils import date_time_utility
-from utils.dictionary_set import handle_dictionary
-from utils.directory_handler import make_directory
+from utils import date_time
+from utils.dict_operations import handle_dictionary
+from utils.directory_operations import make_directory
 from utils.function_util import is_overridden_func
 from utils.system_printer import SystemPrinter
 
@@ -250,12 +250,12 @@ class TimeCallback(Callback):
 
     def on_end(self, logs=None):
         end_time = time.time()
-        total_time = date_time_utility.get_time(end_time - self.start_time)
+        total_time = date_time.get_time(end_time - self.start_time)
         SystemPrinter.sys_print("Run Time : {}".format(total_time))
 
     def interruption(self, logs=None):
         end_time = time.time()
-        total_time = date_time_utility.get_time(end_time - self.start_time)
+        total_time = date_time.get_time(end_time - self.start_time)
         SystemPrinter.sys_print("Run Time : {}".format(total_time))
 
 

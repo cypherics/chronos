@@ -1,4 +1,3 @@
-import os
 from core.utils.model_util import (
     get_current_state,
     set_model_state,
@@ -15,10 +14,9 @@ class PtState:
     def __init__(self):
         self._model = None
         self._optimizer = None
-        self._starting_epoch = 1
-        self._step = 1
+        self._starting_epoch = None
+        self._step = None
         self._bst_vld_loss = None
-        self._state_obj = dict()
 
     @property
     def model(self):
@@ -61,14 +59,14 @@ class PtState:
         self._step = value
 
     @property
-    def state_obj_epoch(self):
-        return {"my_state": self.compress_state_obj("complete")}
+    def epoch_state(self):
+        return {"my_state": self.collect_state("complete")}
 
     @property
-    def state_obj_interruption(self):
-        return {"my_state": self.compress_state_obj("interrupt")}
+    def interruption_state(self):
+        return {"my_state": self.collect_state("interrupt")}
 
-    def compress_state_obj(self, run_state):
+    def collect_state(self, run_state):
         return {
             "model": self.model.state_dict(),
             "optimizer": self.optimizer.state_dict()
@@ -84,43 +82,44 @@ class PtState:
         }
 
     @info
-    def initialization(self, model, optimizer, pth):
-        if os.path.exists(pth):
-            SystemPrinter.sys_print("\t Loading Existing State {}".format(pth))
-            ongoing_state = get_current_state(pth)
-            if self.check_key_and_none(ongoing_state, "model"):
-                self.model = set_model_state(model, ongoing_state["model"])
-                logger.debug("Existing Model Loaded")
+    def restart(self, model, optimizer, state_pth):
+        SystemPrinter.sys_print("\t Loading Existing State {}".format(state_pth))
+        ongoing_state = get_current_state(state_pth)
+        if self.check_key_and_none(ongoing_state, "model"):
+            self.model = set_model_state(model, ongoing_state["model"])
+            logger.debug("Existing Model Loaded")
 
-            self.model = load_parallel_model(self.model)
+        self.model = load_parallel_model(self.model)
 
-            if self.check_key_and_none(ongoing_state, "optimizer"):
-                self.optimizer = set_optimizer_state(
-                    optimizer, ongoing_state["optimizer"]
+        if self.check_key_and_none(ongoing_state, "optimizer"):
+            self.optimizer = set_optimizer_state(optimizer, ongoing_state["optimizer"])
+            logger.debug(
+                "Existing Optimizer Loaded with lr {}".format(
+                    self.optimizer.param_groups[0]["lr"]
                 )
-                logger.debug(
-                    "Existing Optimizer Loaded with lr {}".format(
-                        self.optimizer.param_groups[0]["lr"]
-                    )
-                )
+            )
 
-            if self.check_key_and_none(ongoing_state, "starting_epoch"):
-                self.starting_epoch = ongoing_state["starting_epoch"]
-                logger.debug("Existing Start Epoch {}".format(self.starting_epoch))
+        if self.check_key_and_none(ongoing_state, "starting_epoch"):
+            self.starting_epoch = ongoing_state["starting_epoch"]
+            logger.debug("Existing Start Epoch {}".format(self.starting_epoch))
 
-            if self.check_key_and_none(ongoing_state, "step"):
-                self.step = ongoing_state["step"]
-                logger.debug("Existing Step Epoch {}".format(self._step))
+        if self.check_key_and_none(ongoing_state, "step"):
+            self.step = ongoing_state["step"]
+            logger.debug("Existing Step Epoch {}".format(self._step))
 
-            if self.check_key_and_none(ongoing_state, "bst_vld_loss"):
-                self.bst_vld_loss = ongoing_state["bst_vld_loss"]
-                logger.debug("Existing Best Valid Loss {}".format(self.bst_vld_loss))
+        if self.check_key_and_none(ongoing_state, "bst_vld_loss"):
+            self.bst_vld_loss = ongoing_state["bst_vld_loss"]
+            logger.debug("Existing Best Valid Loss {}".format(self.bst_vld_loss))
 
-        else:
-            SystemPrinter.sys_print("\t Loading Default State")
-            self.model = model
-            self.optimizer = optimizer
-            self.model = load_parallel_model(self.model)
+    @info
+    def new(self, model, optimizer):
+        SystemPrinter.sys_print("\t Loading New State")
+        self.model = model
+        self.optimizer = optimizer
+        self.model = load_parallel_model(self.model)
+        self.starting_epoch = 1
+        self.step = 1
+        self.bst_vld_loss = None
 
     @staticmethod
     def check_key_and_none(state, key):

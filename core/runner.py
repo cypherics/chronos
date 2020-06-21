@@ -11,7 +11,7 @@ from core.utils import tensor_util
 from core.utils.model_util import get_prediction_as_per_instance
 from core.utils.tensor_util import cuda_variable
 from core.state import PtState
-from utils.dictionary_set import dict_to_string, handle_dictionary
+from utils.dict_operations import dict_to_string, handle_dictionary
 from core.logger import info, ChronosLogger
 from core.scheduler import get_scheduler
 from utils.system_printer import SystemPrinter
@@ -37,8 +37,9 @@ class PtRunner(PtState):
 
         batch_size = self.config.batch_size
         epochs = self.config.n_epochs
-
-        self.initialization(model, optimizer, self.config.default_state)
+        self.restart(
+            model, optimizer, self.config.default_state
+        ) if self.config.resume else self.new(model, optimizer)
 
         if self.config.scheduler_name is not None:
             scheduler = get_scheduler(
@@ -113,13 +114,13 @@ class PtRunner(PtState):
                     self.bst_vld_loss = valid_loss
 
                 training_callbacks.on_epoch_end(
-                    self.starting_epoch, logs={**epoch_logs, **self.state_obj_epoch}
+                    self.starting_epoch, logs={**epoch_logs, **self.epoch_state}
                 )
 
             except KeyboardInterrupt:
                 progress_bar.close()
                 training_callbacks.interruption(
-                    logs={**epoch_logs, **self.state_obj_interruption}
+                    logs={**epoch_logs, **self.interruption_state}
                 )
                 SystemPrinter.sys_print(
                     "KEYBOARD EXCEPTION CHECKPOINT SAVED : {}".format(ongoing_epoch)

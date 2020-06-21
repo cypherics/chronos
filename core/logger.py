@@ -4,8 +4,8 @@ import functools
 import logging
 from logging.handlers import TimedRotatingFileHandler
 
-from utils.date_time_utility import get_date
-from utils.directory_handler import make_directory
+from utils.date_time import get_date
+from utils.directory_operations import make_directory
 from utils.function_util import extract_detail, get_details
 
 
