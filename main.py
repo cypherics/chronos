@@ -1,6 +1,6 @@
 import fire
 
-from ml.train import Train
+from train import Train
 
 
 class Init(object):
