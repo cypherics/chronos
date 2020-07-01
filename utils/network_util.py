@@ -16,24 +16,6 @@ def get_gpu_device_ids():
     return device_id
 
 
-@debug
-def get_current_state(weight_path):
-    state = torch.load(str(weight_path), map_location="cpu")
-    return state
-
-
-def set_model_state(model, state):
-    if state is not None:
-        model_cuda = adjust_model(state)
-        model.load_state_dict(model_cuda)
-    return model
-
-
-def set_optimizer_state(optimizer, state):
-    optimizer.load_state_dict(state)
-    return optimizer
-
-
 def load_parallel_model(model):
     if torch.cuda.is_available():
         device_ids = get_gpu_device_ids()

@@ -2,7 +2,7 @@ import random
 import cv2
 import numpy as np
 
-from core.utils.image_util import get_random_crop_x_and_y, crop_image, perform_scale
+from utils.image_ops import get_random_crop_x_and_y, crop_image, perform_scale
 from core.logger import debug, ChronosLogger
 
 logger = ChronosLogger.get_logger()

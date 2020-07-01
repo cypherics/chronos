@@ -3,9 +3,9 @@ from sklearn.metrics import confusion_matrix
 from sklearn.utils.multiclass import type_of_target
 from torch import Tensor
 
-from core.utils.tensor_util import convert_tensor_to_numpy
+from utils.pt_tensor import convert_tensor_to_numpy
 from core.logger import debug
-from utils.dict_operations import handle_dictionary
+from utils.dict_ops import handle_dictionary
 from utils.system_printer import SystemPrinter
 
 EPSILON = 1e-11

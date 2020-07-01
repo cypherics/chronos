@@ -2,7 +2,7 @@ import torch
 from torch import nn
 from abc import abstractmethod
 
-from core.utils.model_util import adjust_model
+from utils.network_util import adjust_model
 
 
 class BaseNetwork(nn.Module):

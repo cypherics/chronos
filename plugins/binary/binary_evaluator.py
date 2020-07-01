@@ -2,12 +2,12 @@ import numpy as np
 from torchvision.utils import make_grid
 
 from ..base.base_evaluator import BaseEvaluator
-from core.utils.tensor_util import cuda_variable
+from utils.pt_tensor import make_cuda
 
 
 class BinaryEvaluator(BaseEvaluator):
     def create_prediction_grid(self, inputs, prediction):
-        display_image = cuda_variable(inputs)
+        display_image = make_cuda(inputs)
         display_image = display_image["image"].cpu()
         grid = make_grid(prediction, nrow=2, normalize=True)
         nda = grid.mul(255).clamp(0, 255).byte().permute(1, 2, 0).cpu().numpy()

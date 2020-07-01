@@ -7,11 +7,11 @@ import tqdm
 
 from core.callbacks import CallbackList, SchedulerCallback
 from core.data.metrics import compute_metric, compute_mean_metric
-from core.utils import tensor_util
-from core.utils.model_util import get_prediction_as_per_instance
-from core.utils.tensor_util import cuda_variable
+from utils import pt_tensor
+from utils.network_util import get_prediction_as_per_instance
+from utils.pt_tensor import make_cuda
 from core.state import PtState
-from utils.dict_operations import dict_to_string, handle_dictionary
+from utils.dict_ops import dict_to_string, handle_dictionary
 from core.logger import info, ChronosLogger
 from core.scheduler import get_scheduler
 from utils.system_printer import SystemPrinter
@@ -144,7 +144,7 @@ class PtRunner(PtState):
             if not self.model.training:
                 self.model.train()
 
-            input_data = tensor_util.cuda_variable(input_data)
+            input_data = pt_tensor.make_cuda(input_data)
 
             outputs = self.model(input_data)
             calculated_loss = criterion(outputs=outputs, **input_data)
@@ -184,11 +184,11 @@ class PtRunner(PtState):
             )
 
             ongoing_count += 1
-            input_data = cuda_variable(input_data)
+            input_data = make_cuda(input_data)
 
             targets = input_data["label"]
 
-            input_data = cuda_variable(input_data)
+            input_data = make_cuda(input_data)
             outputs = self.model(input_data)
             loss = criterion(outputs, **input_data)
 

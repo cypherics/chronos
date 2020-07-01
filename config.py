@@ -4,7 +4,7 @@ import yaml
 
 from pyjavaproperties import Properties
 
-from utils.directory_operations import (
+from utils.directory_ops import (
     level_2_folder_creation,
     create_version,
     create_state_path,

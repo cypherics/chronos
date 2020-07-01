@@ -26,7 +26,7 @@ def create_chk_path(pth, exp_name, model, version):
 
 
 def level_2_folder_creation(root, level_1, level_2):
-    root_folder = make_directory(os.getcwd(), "run/" + root)
+    root_folder = make_directory(os.getcwd(), "store/" + root)
     level_1_folder_path = make_directory(root_folder, level_1)
     level_2_folder_path = make_directory(level_1_folder_path, level_2)
 

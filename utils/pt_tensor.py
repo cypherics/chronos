@@ -3,24 +3,20 @@ import torch
 import numpy as np
 
 
-def cuda_variable(x):
+def make_cuda(x):
     """
 
     :param x:
     :return:
     """
     if isinstance(x, (list, tuple)):
-        return [cuda_variable(y) for y in x]
+        return [make_cuda(y) for y in x]
 
     if isinstance(x, dict):
         for k, v in x.items():
-            x[k] = cuda_variable(v)
+            x[k] = make_cuda(v)
         return x
 
-    return cuda(x)
-
-
-def cuda(x):
     return x.cuda() if torch.cuda.is_available() else x
 
 
@@ -51,7 +47,7 @@ def add_extra_dimension(data):
 def prediction_tensor_cuda(data):
     data = to_input_image_tensor(data)
     data = add_extra_dimension(data)
-    data = cuda_variable(data)
+    data = make_cuda(data)
     return data
 
 

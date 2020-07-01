@@ -5,7 +5,7 @@ import logging
 from logging.handlers import TimedRotatingFileHandler
 
 from utils.date_time import get_date
-from utils.directory_operations import make_directory
+from utils.directory_ops import make_directory
 from utils.function_util import extract_detail, get_details
 
 
@@ -31,7 +31,7 @@ class ChronosLogger:
 
     @staticmethod
     def create_time_rotated_log(log_path, plugin, exp_name, model, version, logger):
-        extensive_log_file = os.path.join(log_path, exp_name + "_extensive.log")
+        extensive_log_file = os.path.join(log_path, exp_name + ".log")
         tfl = TimedRotatingFileHandler(extensive_log_file, when="D")
         tfl.setLevel(logging.DEBUG)
         rfl_format = logging.Formatter(
@@ -43,7 +43,7 @@ class ChronosLogger:
 
     @staticmethod
     def create_file_log(log_path, plugin, exp_name, model, version, logger):
-        log_file = os.path.join(log_path, exp_name + ".log")
+        log_file = os.path.join(log_path, "{}-console".format(exp_name) + ".log")
         fl = logging.FileHandler(log_file)
         fl.setLevel(logging.INFO)
         fl_format = logging.Formatter(

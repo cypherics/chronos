@@ -1,10 +1,7 @@
-from core.utils.model_util import (
-    get_current_state,
-    set_model_state,
-    set_optimizer_state,
-    load_parallel_model,
-)
-from core.logger import ChronosLogger, info
+import torch
+
+from utils.network_util import load_parallel_model, adjust_model
+from core.logger import ChronosLogger, info, debug
 from utils.system_printer import SystemPrinter
 
 logger = ChronosLogger.get_logger()
@@ -52,11 +49,11 @@ class PtState:
 
     @property
     def bst_vld_loss(self):
-        return self._step
+        return self._bst_vld_loss
 
     @bst_vld_loss.setter
     def bst_vld_loss(self, value):
-        self._step = value
+        self._bst_vld_loss = value
 
     @property
     def epoch_state(self):
@@ -84,15 +81,17 @@ class PtState:
     @info
     def restart(self, model, optimizer, state_pth):
         SystemPrinter.sys_print("\t Loading Existing State {}".format(state_pth))
-        ongoing_state = get_current_state(state_pth)
+        ongoing_state = self.extract_state(state_pth)
         if self.check_key_and_none(ongoing_state, "model"):
-            self.model = set_model_state(model, ongoing_state["model"])
+            self.model = self.set_model_state(model, ongoing_state["model"])
             logger.debug("Existing Model Loaded")
 
         self.model = load_parallel_model(self.model)
 
         if self.check_key_and_none(ongoing_state, "optimizer"):
-            self.optimizer = set_optimizer_state(optimizer, ongoing_state["optimizer"])
+            self.optimizer = self.set_optimizer_state(
+                optimizer, ongoing_state["optimizer"]
+            )
             logger.debug(
                 "Existing Optimizer Loaded with lr {}".format(
                     self.optimizer.param_groups[0]["lr"]
@@ -131,3 +130,21 @@ class PtState:
             return False
         else:
             return True
+
+    @staticmethod
+    @debug
+    def extract_state(weight_path):
+        state = torch.load(str(weight_path), map_location="cpu")
+        return state
+
+    @staticmethod
+    def set_model_state(model, model_state):
+        if model_state is not None:
+            model_adjusted = adjust_model(model_state)
+            model.load_state_dict(model_adjusted)
+        return model
+
+    @staticmethod
+    def set_optimizer_state(optimizer, optimizer_state):
+        optimizer.load_state_dict(optimizer_state)
+        return optimizer

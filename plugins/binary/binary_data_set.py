@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-from core.utils.tensor_util import to_input_image_tensor, to_label_image_tensor
+from utils.pt_tensor import to_input_image_tensor, to_label_image_tensor
 from ..base.base_data_set import BaseDataSetPt
 
 

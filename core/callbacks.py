@@ -8,12 +8,12 @@ import time
 
 import cv2
 
-from core.utils.model_util import adjust_model, get_prediction_as_per_instance
+from utils.network_util import adjust_model, get_prediction_as_per_instance
 from core.logger import debug, ChronosLogger
-from core.utils.tensor_util import cuda_variable
+from utils.pt_tensor import make_cuda
 from utils import date_time
-from utils.dict_operations import handle_dictionary
-from utils.directory_operations import make_directory
+from utils.dict_ops import handle_dictionary
+from utils.directory_ops import make_directory
 from utils.function_util import is_overridden_func
 from utils.system_printer import SystemPrinter
 
@@ -320,7 +320,7 @@ class TestCallback(Callback):
             try:
                 for i, (inputs, file_path) in enumerate(self.test_loader):
 
-                    image = cuda_variable(inputs)
+                    image = make_cuda(inputs)
                     prediction = model(image)
                     prediction = get_prediction_as_per_instance(prediction)
                     prediction = self.evaluator.handle_prediction(prediction)
