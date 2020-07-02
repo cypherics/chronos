@@ -1,8 +1,11 @@
+from typing import Any
+
 import cv2
 import numpy as np
 from pathlib import Path
 
 import torch
+from dataclasses import dataclass
 from torch.utils.data import Dataset, DataLoader
 
 from utils.image_ops import (
@@ -15,6 +18,13 @@ from core.data import augmentator, normalizer
 from abc import ABCMeta, abstractmethod
 
 from core.logger import info
+
+
+@dataclass
+class Data:
+    train_data: Any
+    val_data: Any
+    test_data: Any
 
 
 class BaseDataSetPt(Dataset, metaclass=ABCMeta):
@@ -40,34 +50,30 @@ class BaseDataSetPt(Dataset, metaclass=ABCMeta):
         self.labels = sorted(list((self.root / self.mode / "labels").glob("*")))
 
     @classmethod
-    def get_train_data(cls, training_configuration):
-        return DataLoader(
-            dataset=cls(training_configuration, "train"),
+    def get_data(cls, config):
+        train_data = DataLoader(
+            dataset=cls(config, "train"),
             shuffle=True,
             num_workers=0,
-            batch_size=training_configuration.batch_size,
+            batch_size=config.batch_size,
+            pin_memory=torch.cuda.is_available(),
+        )
+        val_data = DataLoader(
+            dataset=cls(config, "val"),
+            shuffle=True,
+            num_workers=0,
+            batch_size=config.batch_size,
             pin_memory=torch.cuda.is_available(),
         )
 
-    @classmethod
-    def get_val_data(cls, training_configuration):
-        return DataLoader(
-            dataset=cls(training_configuration, "val"),
+        test_data = DataLoader(
+            dataset=cls(config, "test"),
             shuffle=True,
             num_workers=0,
-            batch_size=training_configuration.batch_size,
+            batch_size=config.batch_size,
             pin_memory=torch.cuda.is_available(),
         )
-
-    @classmethod
-    def get_test_data(cls, training_configuration):
-        return DataLoader(
-            dataset=cls(training_configuration, "test"),
-            shuffle=True,
-            num_workers=0,
-            batch_size=training_configuration.batch_size,
-            pin_memory=torch.cuda.is_available(),
-        )
+        return Data(train_data, val_data, test_data)
 
     def __len__(self):
         if len(self.images) != 0:

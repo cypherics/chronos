@@ -41,15 +41,7 @@ class PtPlugin:
         )
 
         evaluator = self.factory.create_evaluator()
-        train_data_loader, val_data_loader, test_data_loader = (
-            self.factory.create_data_set()
-        )
+        data_loader = self.factory.create_data_set()
+        plugin_callbacks = self.factory.create_callback()
 
-        return (
-            model,
-            criterion,
-            evaluator,
-            train_data_loader,
-            val_data_loader,
-            test_data_loader,
-        )
+        return model, criterion, evaluator, data_loader

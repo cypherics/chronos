@@ -13,3 +13,6 @@ class Factory:
 
     def create_evaluator(self):
         raise NotImplementedError
+
+    def create_callback(self):
+        raise NotImplementedError

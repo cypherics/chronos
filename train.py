@@ -22,16 +22,20 @@ CONFIG_RESTRICTION = ["DATASET", "MODEL", "TRAIN"]
 class Train:
     def __init__(self, plugin, config_path):
         self.config_path = config_path
-        self._train_data_loader, self._val_data_loader, self._test_data_loader = (
-            None,
-            None,
-            None,
-        )
         self._model = None
         self._criterion = None
         self._evaluator = None
         self._optimizer = None
+        self._data_loader = None
         self._plugin = plugin
+
+    @property
+    def data_loader(self):
+        return self._data_loader
+
+    @data_loader.setter
+    def data_loader(self, value):
+        self._data_loader = value
 
     @property
     def model(self):
@@ -65,30 +69,6 @@ class Train:
     def evaluator(self, value):
         self._evaluator = value
 
-    @property
-    def train_data_loader(self):
-        return self._train_data_loader
-
-    @train_data_loader.setter
-    def train_data_loader(self, value):
-        self._train_data_loader = value
-
-    @property
-    def val_data_loader(self):
-        return self._val_data_loader
-
-    @val_data_loader.setter
-    def val_data_loader(self, value):
-        self._val_data_loader = value
-
-    @property
-    def test_data_loader(self):
-        return self._test_data_loader
-
-    @test_data_loader.setter
-    def test_data_loader(self, value):
-        self._test_data_loader = value
-
     def run(self):
         config = Config(self.config_path, CONFIG_RESTRICTION, self._plugin)
         if not config.resume:
@@ -108,9 +88,7 @@ class Train:
             self.model,
             self.criterion,
             self.evaluator,
-            self.train_data_loader,
-            self.val_data_loader,
-            self.test_data_loader,
+            self.data_loader,
         ) = plugin.load_plugin(config)
         self.load_optimizer(config.optimizer_name, config.optimizer_param)
 
@@ -120,8 +98,8 @@ class Train:
             self.model,
             self.optimizer,
             self.criterion,
-            self.train_data_loader,
-            self.val_data_loader,
+            self.data_loader.train_data,
+            self.data_loader.val_data,
             callbacks,
         )
 
@@ -144,7 +122,7 @@ class Train:
         if self.evaluator is not None:
             callbacks.append(
                 TestCallback(
-                    test_loader=self.test_data_loader,
+                    test_loader=self.data_loader.test_data,
                     evaluator=self.evaluator,
                     pth=os.path.join(config.training_path, config.version),
                 )
