@@ -1,8 +1,7 @@
 from plugins.base.base_factory import Factory
 from plugins.binary import network, criterion
 from plugins.binary.binary_data_set import BinaryDataSet
-from plugins.binary.binary_evaluator import BinaryEvaluator
-from plugins.binary.binary_callbacks import BinaryCallback
+from plugins.binary.binary_extension import BinaryExtension
 
 
 class BinaryFactory(Factory):
@@ -11,10 +10,7 @@ class BinaryFactory(Factory):
         super(BinaryFactory, self).__init__(config)
 
     def create_data_set(self):
-        return BinaryDataSet.get_data(self.config)
-
-    def create_evaluator(self):
-        return BinaryEvaluator()
+        return BinaryDataSet.get_data_loader(self.config)
 
     def create_criterion(self, criterion_name, criterion_param):
         criterion_fn = getattr(criterion, criterion_name)(**criterion_param)
@@ -24,5 +20,5 @@ class BinaryFactory(Factory):
         model = getattr(network, model_name)(**model_param)
         return model
 
-    def create_callback(self):
-        return BinaryCallback(self.config).get_callbacks()
+    def create_extension(self):
+        return BinaryExtension(self.config)

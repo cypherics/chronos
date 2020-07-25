@@ -7,7 +7,7 @@ from utils.system_printer import SystemPrinter
 logger = ChronosLogger.get_logger()
 
 
-class PtState:
+class LearnerState:
     def __init__(self):
         self._model = None
         self._optimizer = None
@@ -80,7 +80,7 @@ class PtState:
 
     @info
     def restart(self, model, optimizer, state_pth):
-        SystemPrinter.sys_print("\t Loading Existing State {}".format(state_pth))
+        SystemPrinter.sys_print("Loading Existing State {}".format(state_pth))
         ongoing_state = self.extract_state(state_pth)
         if self.check_key_and_none(ongoing_state, "model"):
             self.model = self.set_model_state(model, ongoing_state["model"])
@@ -112,7 +112,7 @@ class PtState:
 
     @info
     def new(self, model, optimizer):
-        SystemPrinter.sys_print("\t Loading New State")
+        SystemPrinter.sys_print("Loading New State")
         self.model = model
         self.optimizer = optimizer
         self.model = load_parallel_model(self.model)

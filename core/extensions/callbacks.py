@@ -6,13 +6,9 @@ import torch
 import warnings
 import time
 
-import cv2
-
-from utils.network_util import adjust_model, get_prediction_as_per_instance
+from utils.network_util import adjust_model
 from core.logger import debug, ChronosLogger
-from utils.pt_tensor import make_cuda
 from utils import date_time
-from utils.dict_ops import handle_dictionary
 from utils.directory_ops import make_directory
 from utils.function_util import is_overridden_func
 from utils.system_printer import SystemPrinter
@@ -206,10 +202,29 @@ class TensorBoardCallback(Callback):
         self.writer.flush()
 
     def on_epoch_end(self, epoch, logs=None):
-        loss = logs["plt_loss"]
-        lr = logs["plt_lr"]
-        self.plt_scalar(lr["data"], epoch, lr["tag"])
-        self.plt_scalar(loss["data"], epoch, loss["tag"])
+        lr = logs["lr"]
+        train_loss = logs["train_loss"]
+        valid_loss = logs["valid_loss"]
+
+        train_metric = logs["train_metric"]
+        valid_metric = logs["valid_metric"]
+
+        self.plt_scalar(lr, epoch, "LR/Epoch")
+        self.plt_scalar(
+            {"train_loss": train_loss, "valid_loss": valid_loss}, epoch, "Loss/Epoch"
+        )
+
+        metric_keys = list(train_metric.keys())
+        for key in metric_keys:
+            self.plt_scalar(
+                {
+                    "Train_{}".format(key): train_metric[key],
+                    "Valid_{}".format(key): valid_metric[key],
+                },
+                epoch,
+                "{}/Epoch".format(key),
+            )
+
         logger.debug(
             "Successful on Epoch End {}, Data Plot".format(self.__class__.__name__)
         )
@@ -259,31 +274,6 @@ class TimeCallback(Callback):
         SystemPrinter.sys_print("Run Time : {}".format(total_time))
 
 
-class PredictionSaveCallback(Callback):
-    def __init__(self, pth):
-        super().__init__()
-        self.save_path = pth
-
-    def on_batch_end(self, batch, logs=None):
-        img_data = logs["plt_img"] if "plt_img" in logs else None
-
-        if img_data is not None:
-            save_path = make_directory(self.save_path, "test_prediction")
-
-            shutil.rmtree(save_path)
-            os.makedirs(save_path)
-
-            save_image_path = os.path.join(save_path, "{}.png".format(batch))
-            cv2.imwrite(
-                save_image_path, cv2.cvtColor(img_data["img"], cv2.COLOR_RGB2BGR)
-            )
-            logger.debug(
-                "Successful on Batch End {}, Images Saved".format(
-                    self.__class__.__name__
-                )
-            )
-
-
 class TrainChkCallback(Callback):
     @debug
     def __init__(self, save_path):
@@ -303,38 +293,3 @@ class TrainChkCallback(Callback):
         logger.debug(
             "Successful on interruption {}, Chk Saved".format(self.__class__.__name__)
         )
-
-
-class TestCallback(Callback):
-    @debug
-    def __init__(self, test_loader, evaluator, pth):
-        super().__init__()
-        self.test_loader = test_loader
-        self.evaluator = evaluator
-        self.prediction_save_callback = PredictionSaveCallback(pth)
-
-    def on_batch_end(self, batch, logs=None):
-        model = logs["model"]
-        model.eval()
-        if random.random() < 0.10:
-            try:
-                for i, (inputs, file_path) in enumerate(self.test_loader):
-
-                    image = make_cuda(inputs)
-                    prediction = model(image)
-                    prediction = get_prediction_as_per_instance(prediction)
-                    prediction = self.evaluator.handle_prediction(prediction)
-                    prediction = self.evaluator.create_prediction_grid(
-                        inputs, prediction
-                    )
-                    logs = handle_dictionary(
-                        logs, "plt_img", {"img": prediction, "tag": "Test"}
-                    )
-                    self.prediction_save_callback.on_batch_end(batch, logs)
-                    break
-            except Exception as ex:
-                logger.exception(
-                    "Skipped Exception in {}".format(self.__class__.__name__)
-                )
-                logger.exception("Exception {}".format(ex))
-                pass

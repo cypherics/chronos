@@ -160,3 +160,5 @@ checkpoints/
 run/
 exp_store/
 store/
+exp_zoo/
+zoo/

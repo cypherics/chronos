@@ -100,15 +100,6 @@ def info(func):
     @functools.wraps(func)
     @exception
     def wrapper(*args, **kwargs):
-
-        logger = ChronosLogger.get_logger()
-        class_name, func_name = get_details(func)
-        if class_name is not None:
-            data = (class_name, func_name)
-            msg_str = "LOADED %s with %s" % data
-        else:
-            msg_str = "LOADED %s" % func_name
-        logger.info(msg_str)
         result = func(*args, **kwargs)
         return result
 

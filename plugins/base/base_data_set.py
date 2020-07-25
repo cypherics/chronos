@@ -1,6 +1,7 @@
+import os
+
 from typing import Any
 
-import cv2
 import numpy as np
 from pathlib import Path
 
@@ -8,16 +9,13 @@ import torch
 from dataclasses import dataclass
 from torch.utils.data import Dataset, DataLoader
 
-from utils.image_ops import (
-    get_pad_limit,
-    pad_image,
-    get_random_crop_x_and_y,
-    crop_image,
-)
-from core.data import augmentator, normalizer
+from core import augmentator
 from abc import ABCMeta, abstractmethod
 
 from core.logger import info
+from utils.dict_ops import handle_dictionary
+from utils.image_ops import handle_image_size, load_image
+from utils.pt_tensor import to_input_image_tensor
 
 
 @dataclass
@@ -32,7 +30,6 @@ class BaseDataSetPt(Dataset, metaclass=ABCMeta):
         self.config = config
         root = self.config.root
         model_input_dim = self.config.model_input_dimension
-        normalization = self.config.normalization
         transform = self.config.transformation
 
         if mode == "train":
@@ -41,7 +38,6 @@ class BaseDataSetPt(Dataset, metaclass=ABCMeta):
             self.transform = None
 
         self.mode = mode
-        self.normalization = self.load_normalization(normalization)
         self.model_input_dimension = tuple(model_input_dim)
 
         self.root = Path(root)
@@ -50,7 +46,7 @@ class BaseDataSetPt(Dataset, metaclass=ABCMeta):
         self.labels = sorted(list((self.root / self.mode / "labels").glob("*")))
 
     @classmethod
-    def get_data(cls, config):
+    def get_data_loader(cls, config):
         train_data = DataLoader(
             dataset=cls(config, "train"),
             shuffle=True,
@@ -87,24 +83,16 @@ class BaseDataSetPt(Dataset, metaclass=ABCMeta):
             img, _ = self.read_data(idx, self.images)
             mask, _ = self.read_data(idx, self.labels)
 
-            input_dictionary = self.perform_image_operation_train_and_val(
-                img=img, mask=mask
-            )
-            assert isinstance(input_dictionary, dict), "Return type should be dict"
+            images, ground_truth = self.learner_data(img=img, mask=mask)
+            assert isinstance(images, dict), "Return type should be dict"
 
-            assert (
-                "image" in input_dictionary and "label" in input_dictionary
-            ), "while passing image use key-image and for label use key-label"
-
-            return input_dictionary
+            return images, ground_truth
 
         elif self.mode == "test":
             img, file_name = self.read_data(idx, self.images)
-            input_dictionary = self.perform_image_operation_test(img=img)
-            assert isinstance(input_dictionary, dict), "Return type should be dict"
-            assert "image" in input_dictionary, "while passing image use key-image"
-
-            return input_dictionary, str(file_name)
+            images = self.evaluator_data(img=img)
+            assert isinstance(images, dict), "Return type should be dict"
+            return images, str(file_name)
         else:
             raise NotImplementedError
 
@@ -138,60 +126,69 @@ class BaseDataSetPt(Dataset, metaclass=ABCMeta):
         train_transformation = transforms_type(transformation)
         return train_transformation
 
-    @staticmethod
-    @info
-    def load_normalization(normalization_name):
-        normalization = getattr(normalizer, normalization_name)()
-        return normalization
-
-    @staticmethod
-    def handle_image_size(img, mask, model_input_dimension):
-        if model_input_dimension < (img.shape[0], img.shape[1]):
-            height, width = get_random_crop_x_and_y(model_input_dimension, img.shape)
-            img = crop_image(img, model_input_dimension, (height, width))
-            if mask is not None:
-                mask = crop_image(mask, model_input_dimension, (height, width))
-            return img, mask
-
-        elif model_input_dimension > (img.shape[0], img.shape[1]):
-            limit = get_pad_limit(model_input_dimension, img.shape)
-            img = pad_image(img, limit)
-            if mask is not None:
-                mask = pad_image(mask, limit)
-            return img, mask
-        else:
-            return img, mask
-
-    def perform_normalization(self, img):
-        img = self.normalization(img)
-        return img
-
-    def perform_transformation(self, img, mask):
+    def transform_image(self, img, mask):
         if self.mode == "train":
             img, mask = self.transform(img, mask)
         return img, mask
 
-    def read_data(self, idx, data_list):
+    @staticmethod
+    def read_data(idx, data_list):
         if len(data_list) != 0:
             image_file_name = data_list[idx]
-            image = self.load_image(str(image_file_name))
+            image = load_image(str(image_file_name))
             return image, image_file_name
         else:
             return None, None
 
+    def learner_data(self, img, mask):
+        ground_truth = dict()
+        images = dict()
+        data = self.adjust_learner_data(img, mask, self.model_input_dimension)
+        for individual_data in data:
+            keys = list(individual_data.keys())
+            img = individual_data[keys[0]]
+            mask = individual_data[keys[1]]
+            assert len(mask.shape) == len(
+                img.shape
+            ), "Image and mask should have same Tensor dimension"
+
+            img, mask = self.transform_image(img, mask)
+            img = self.normalize_image(img)
+            mask = self.normalize_label(mask=mask)
+
+            assert len(mask.shape) == len(
+                img.shape
+            ), "Image and mask should have same Tensor dimension"
+
+            images = handle_dictionary(images, keys[0], to_input_image_tensor(img))
+            ground_truth = handle_dictionary(
+                ground_truth, keys[1], to_input_image_tensor(mask)
+            )
+        return images, ground_truth
+
+    def evaluator_data(self, img):
+        images = dict()
+        data = self.adjust_evaluator_data(img, self.model_input_dimension)
+        for individual_data in data:
+            keys = list(individual_data.keys())
+            img = individual_data[keys[0]]
+            img = self.normalize_image(img)
+            images = handle_dictionary(images, keys[0], to_input_image_tensor(img))
+        return images
+
     @staticmethod
-    def load_image(path: str):
-        img = cv2.imread(path)
-        return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    def adjust_learner_data(img, mask, dimension) -> [dict]:
+        img, mask = handle_image_size(img, mask, dimension)
+        return [{"image": img, "label": mask}]
+
+    @staticmethod
+    def adjust_evaluator_data(img, dimension) -> [dict]:
+        img, _ = handle_image_size(img, None, dimension)
+        return [{"image": img}]
 
     @abstractmethod
-    def perform_image_operation_train_and_val(self, **kwargs) -> dict:
+    def normalize_label(self, **kwargs) -> np.ndarray:
         raise NotImplementedError
 
-    @abstractmethod
-    def perform_image_operation_test(self, **kwargs) -> dict:
-        raise NotImplementedError
-
-    @abstractmethod
-    def get_label_normalization(self, **kwargs) -> np.ndarray:
+    def normalize_image(self, img) -> np.ndarray:
         raise NotImplementedError

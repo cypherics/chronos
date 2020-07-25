@@ -13,11 +13,11 @@ from utils.directory_ops import (
 
 
 class Config(object):
-    def __init__(self, config_path, restriction, plugin):
+    def __init__(self, config_path, restriction, plugin_name):
         self._config = self.read_config_yaml(config_path)
         self._config_section = restriction
         self._run_config = self.simplify_run_config()
-        self._plugin = plugin
+        self._plugin = plugin_name
         self._resume = self.resume_config(os.path.dirname(config_path))
         self._additional_property = (
             self.read_properties_file(os.path.dirname(config_path))

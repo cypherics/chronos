@@ -8,8 +8,9 @@ class BinaryCrossEntropy(BaseCriterion):
         super().__init__(**kwargs)
         self.nll_loss = nn.BCEWithLogitsLoss()
 
-    def compute_criterion(self, outputs, **kwargs):
-        targets = kwargs["label"]
+    def compute_criterion(self, ground_truth: dict, prediction: dict):
+        prediction = prediction["output"]
+        ground_truth = ground_truth["label"]
 
-        loss = self.nll_loss(outputs, targets)
+        loss = self.nll_loss(prediction, ground_truth)
         return loss

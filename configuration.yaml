@@ -1,84 +1,25 @@
 DATASET:
-  ROOT : /home/palnak/Dataset/scratch_inria
+  ROOT : /home/palnak/Dataset/temp
   EXP_NAME : INRIA_REFINE_LITE
-  NORMALIZATION : Normalize
+  NORMALIZATION : divide_by_255
   TRANSFORMATION:
     DualCompose:
       transform_1:
         augment_prob: 0.6
         to_perform:
           - HorizontalFlip
-          - VerticalFlip
-          - Rotate
-          - RandomFilter
-          - RandomBrightness
-          - RandomContrast
-          - CLAHE
-        transform_type: OneOf
-      transform_2:
-        augment_prob: 0.5
-        to_perform:
-          - MirrorCrop
-          - RescaleCrop
         transform_type: OneOf
 
 MODEL:
-  MODEL_NAME: BinaryRefineLite
+  MODEL_NAME: BinaryNetwork
   MODEL_PARAM:
-    pre_trained_pascal: /home/palnak/Downloads/hrnetv2_w18_imagenet_pretrained.pth
-    STAGE1:
-      NUM_CHANNELS: 64
-      BLOCK: BOTTLENECK
-      NUM_BLOCKS: 4
-      FUSE_METHOD: SUM
-      NUM_MODULES: 1
-      NUM_BRANCHES: 1
-    STAGE2:
-      NUM_CHANNELS:
-        - 18
-        - 36
-      BLOCK: BASIC
-      NUM_BLOCKS:
-        - 4
-        - 4
-      FUSE_METHOD: SUM
-      NUM_MODULES: 1
-      NUM_BRANCHES: 2
 
-    STAGE3:
-      NUM_CHANNELS:
-        - 18
-        - 36
-        - 72
-      BLOCK: BASIC
-      NUM_BLOCKS:
-        - 4
-        - 4
-        - 4
-      FUSE_METHOD: SUM
-      NUM_MODULES: 4
-      NUM_BRANCHES: 3
-    STAGE4:
-      NUM_CHANNELS:
-        - 18
-        - 36
-        - 72
-        - 144
-      BLOCK: BASIC
-      NUM_BLOCKS:
-        - 4
-        - 4
-        - 4
-        - 4
-      FUSE_METHOD: SUM
-      NUM_MODULES: 3
-      NUM_BRANCHES: 4
 
 
 TRAIN:
-  IMAGE_DIM: [384, 384]
-  EPOCH: 200
-  BATCH: 6
+  IMAGE_DIM: [64, 64]
+  EPOCH: 2
+  BATCH: 1
   ML_TYPE : binary
 
   LOSS:
@@ -89,9 +30,8 @@ TRAIN:
   SCHEDULER:
     NAME: PolyLrDecay
     PARAM:
-      decay_after_epoch: 1
       power: 0.9
-      max_epochs: 200
+      max_epochs: 2
 
   OPTIMIZER:
     NAME: Adam

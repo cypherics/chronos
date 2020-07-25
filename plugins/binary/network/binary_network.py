@@ -14,6 +14,6 @@ class BinaryNetwork(BaseNetwork):
         if self.transfer:
             self.load_pre_trained(self.weight_path)
 
-    def forward_propagate(self, x):
+    def forward_propagate(self, x) -> dict:
         x = x["image"]
-        return self.map_net(x)
+        return {"output": self.map_net(x)}

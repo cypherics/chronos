@@ -14,11 +14,13 @@ class Dice(BaseCriterion):
         self.nll_loss = nn.BCEWithLogitsLoss()
         self.dice_weights = kwargs["dice_weight"]
 
-    def compute_criterion(self, outputs, **kwargs):
-        targets = kwargs["label"]
-        bce_loss = self.nll_loss(outputs, targets)
+    def compute_criterion(self, ground_truth: dict, prediction: dict):
+        prediction = prediction["output"]
+        ground_truth = ground_truth["label"]
 
-        outputs = outputs.sigmoid()
-        dice_loss = calculate_dice(outputs, targets)
+        bce_loss = self.nll_loss(prediction, ground_truth)
+
+        outputs = prediction.sigmoid()
+        dice_loss = calculate_dice(outputs, ground_truth)
         loss = bce_loss + self.dice_weights * (1 - dice_loss)
         return loss

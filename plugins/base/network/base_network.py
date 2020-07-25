@@ -13,7 +13,7 @@ class BaseNetwork(nn.Module):
         return self.forward_propagate(x)
 
     @abstractmethod
-    def forward_propagate(self, x):
+    def forward_propagate(self, x) -> dict:
         pass
 
     def load_pre_trained(self, pre_trained):

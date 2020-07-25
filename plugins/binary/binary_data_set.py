@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-from utils.pt_tensor import to_input_image_tensor, to_label_image_tensor
+from utils.image_ops import handle_image_size
 from ..base.base_data_set import BaseDataSetPt
 
 
@@ -9,26 +9,40 @@ class BinaryDataSet(BaseDataSetPt):
     def __init__(self, config, mode):
         super().__init__(config, mode)
 
-    def perform_image_operation_train_and_val(self, img, mask) -> dict:
-        img, mask = super().handle_image_size(img, mask, self.model_input_dimension)
-        img, mask = super().perform_transformation(img, mask)
-        img = super().perform_normalization(img)
-
-        mask = self.get_label_normalization(mask)
-        return {
-            "image": to_input_image_tensor(img),
-            "label": to_label_image_tensor(mask),
-        }
-
-    def perform_image_operation_test(self, img) -> dict:
-        img, _ = super().handle_image_size(img, None, self.model_input_dimension)
-        img = super().perform_normalization(img)
-
-        input_dictionary = {"image": to_input_image_tensor(img)}
-        return input_dictionary
+    @staticmethod
+    def adjust_learner_data(img, mask, dimension) -> [dict]:
+        img, mask = handle_image_size(img, mask, dimension)
+        return [{"image": img, "label": mask}]
 
     @staticmethod
-    def get_label_normalization(mask) -> np.ndarray:
+    def adjust_evaluator_data(img, dimension) -> [dict]:
+        img, _ = handle_image_size(img, None, dimension)
+        return [{"image": img}]
+
+    @staticmethod
+    def normalize_label(mask) -> np.ndarray:
         mask = cv2.cvtColor(mask, cv2.COLOR_RGB2GRAY)
         normalized_mask = mask / 255
-        return normalized_mask
+        return np.expand_dims(normalized_mask, -1)
+
+    def normalize_image(self, img) -> np.ndarray:
+        return getattr(self, self.config.normalization)(img)
+
+    @staticmethod
+    def inria_data(img: np.ndarray) -> np.ndarray:
+        img = img.astype(np.float32) / 255
+        img -= np.ones(img.shape) * (
+            0.42068335885143315,
+            0.43821200008781647,
+            0.4023395608370018,
+        )
+        img /= np.ones(img.shape) * (
+            0.03871459540580076,
+            0.039615887087616986,
+            0.04203108867447648,
+        )
+        return img
+
+    @staticmethod
+    def divide_by_255(img: np.ndarray) -> np.ndarray:
+        return img / 255

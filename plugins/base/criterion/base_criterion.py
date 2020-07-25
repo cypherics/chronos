@@ -5,9 +5,9 @@ class BaseCriterion:
     def __init__(self, **kwargs):
         pass
 
-    def __call__(self, outputs, **kwargs):
-        return self.compute_criterion(outputs, **kwargs)
+    def __call__(self, ground_truth: dict, prediction: dict):
+        return self.compute_criterion(ground_truth, prediction)
 
     @abstractmethod
-    def compute_criterion(self, outputs, **kwargs):
+    def compute_criterion(self, ground_truth: dict, prediction: dict):
         pass

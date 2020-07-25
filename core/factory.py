@@ -5,10 +5,14 @@ from core.logger import info
 from utils.system_printer import SystemPrinter
 
 
-class PtPlugin:
+class Plugin:
     def __init__(self, config):
         self.config = config
         self.factory = self.create_factory()
+        self.model = None
+        self.criterion = None
+        self.loader = None
+        self.extension = None
 
     @info
     def create_factory(self):
@@ -31,17 +35,20 @@ class PtPlugin:
             )
             return f
 
-    def load_plugin(self, config):
-        model = self.factory.create_network(config.model_name, config.model_param)
-        SystemPrinter.sys_print("\t LOADED MODEL - {}".format(model.__class__.__name__))
-
-        criterion = self.factory.create_criterion(config.loss_name, config.loss_param)
+    def load_plugin(self):
+        self.model = self.factory.create_network(
+            self.config.model_name, self.config.model_param
+        )
         SystemPrinter.sys_print(
-            "\t LOADED CRITERION - {}".format(criterion.__class__.__name__)
+            "\t LOADED MODEL - {}".format(self.model.__class__.__name__)
         )
 
-        evaluator = self.factory.create_evaluator()
-        data_loader = self.factory.create_data_set()
-        plugin_callbacks = self.factory.create_callback()
+        self.criterion = self.factory.create_criterion(
+            self.config.loss_name, self.config.loss_param
+        )
+        SystemPrinter.sys_print(
+            "\t LOADED CRITERION - {}".format(self.criterion.__class__.__name__)
+        )
 
-        return model, criterion, evaluator, data_loader
+        self.loader = self.factory.create_data_set()
+        self.extension = self.factory.create_extension()

@@ -24,13 +24,14 @@ class Jaccard(BaseCriterion):
         self.jaccard_weight = kwargs["jaccard_weight"]
         self.binary_weight = 1 if self.jaccard_weight == 1 else 1 - self.jaccard_weight
 
-    def compute_criterion(self, outputs, **kwargs):
-        targets = kwargs["label"]
+    def compute_criterion(self, ground_truth: dict, prediction: dict):
+        prediction = prediction["output"]
+        ground_truth = ground_truth["label"]
 
-        loss = self.binary_weight * self.nll_loss(outputs, targets)
+        loss = self.binary_weight * self.nll_loss(prediction, ground_truth)
 
         if self.jaccard_weight:
-            targets = (targets == 1).float()
-            outputs = outputs.sigmoid()
+            targets = (ground_truth == 1).float()
+            outputs = prediction.sigmoid()
             loss -= self.jaccard_weight * calculate_iou(outputs, targets)
         return loss
